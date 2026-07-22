@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  aplicacion:
+    build: .
+    container_name: app_subastas
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PUERTO=3000
+      - NODE_ENV=desarrollo
+      - BD_HOST=base_datos
+      - BD_PUERTO=3306
+      - BD_NOMBRE=bd_subastas
+      - BD_USUARIO=usuario_subastas
+      - BD_CLAVE=clave_subastas
+      - JWT_SECRETO=clave_secreta_super_segura_subastas
+    depends_on:
+      - base_datos
+
+  base_datos:
+    image: mysql:8.0
+    container_name: mysql_subastas
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: clave_root_mysql
+      MYSQL_DATABASE: bd_subastas
+      MYSQL_USER: usuario_subastas
+      MYSQL_PASSWORD: clave_subastas
+    ports:
+      - "3306:3306"
+    volumes:
+      - datos_mysql:/var/lib/mysql
+
+volumes:
+  datos_mysql:

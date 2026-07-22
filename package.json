@@ -1,0 +1,35 @@
+{
+  "name": "sistema-subastas",
+  "version": "1.0.0",
+  "description": "Sistema de subastas en tiempo real con Node.js, Express, Sequelize, MySQL, Socket.io, Pug y Tailwind CSS",
+  "main": "servidor.js",
+  "scripts": {
+    "inicio": "node servidor.js",
+    "desarrollo": "nodemon servidor.js",
+    "construir:css": "tailwindcss -i ./src/publico/css/entrada.css -o ./src/publico/css/estilos.css --watch"
+  },
+  "keywords": [
+    "subastas",
+    "express",
+    "sequelize",
+    "socket.io",
+    "pug",
+    "tailwindcss"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.9.7",
+    "pug": "^3.0.2",
+    "sequelize": "^6.37.3",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "tailwindcss": "^3.4.3"
+  }
+}
