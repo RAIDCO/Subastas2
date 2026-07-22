@@ -18,8 +18,9 @@ Proyecto escolar para la gestión y participación en subastas en tiempo real.
 ├── docker-compose.yml            # Orquestación de app Node + MySQL
 ├── package.json                  # Dependencias y scripts del proyecto
 ├── tailwind.config.js            # Configuración de estilos Tailwind CSS
-├── servidor.js                   # Punto de entrada principal del servidor
+├── servidor.js                   # Punto de entrada principal (Servidor HTTP + Socket.io)
 └── src/
+    ├── aplicacion.js             # Configuración de la app Express (Equivalente a app.js)
     ├── configuracion/            # Configuración de base de datos y ORM
     │   └── baseDeDatos.js
     ├── controladores/            # Controladores de la API y lógica de negocio
