@@ -1,0 +1,71 @@
+doctype html
+html(lang="es")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title= titulo || 'SubastasPro'
+
+    //- Google Fonts: Plus Jakarta Sans
+    link(rel="preconnect" href="https://fonts.googleapis.com")
+    link(rel="preconnect" href="https://fonts.gstatic.com" crossorigin)
+    link(href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet")
+
+    //- Tailwind CSS CDN
+    script(src="https://cdn.tailwindcss.com")
+    script.
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            }
+          }
+        }
+      }
+
+    //- Socket.io cliente
+    script(src="/socket.io/socket.io.js")
+
+  body(class="font-sans bg-slate-950 text-slate-100 min-h-screen antialiased")
+    div(class="flex h-screen overflow-hidden")
+
+      //- Sidebar de navegación
+      include ../parciales/sidebar.pug
+
+      //- Contenido principal (navbar superior + área de contenido)
+      div(class="flex-1 flex flex-col overflow-hidden")
+
+        //- Navbar superior de la app
+        include ../parciales/navbar-app.pug
+
+        //- Área de contenido principal scrolleable
+        main(class="flex-1 overflow-y-auto p-6 lg:p-8")
+          block contenido
+
+    //- Script para toggle del sidebar en móvil
+    script.
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const sidebarClose = document.getElementById('sidebar-close');
+      const sidebar = document.getElementById('sidebar');
+      const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+      if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', () => {
+          sidebar.classList.remove('-translate-x-full');
+          sidebarOverlay.classList.remove('hidden');
+        });
+      }
+      if (sidebarClose && sidebar) {
+        sidebarClose.addEventListener('click', () => {
+          sidebar.classList.add('-translate-x-full');
+          sidebarOverlay.classList.add('hidden');
+        });
+      }
+      if (sidebarOverlay && sidebar) {
+        sidebarOverlay.addEventListener('click', () => {
+          sidebar.classList.add('-translate-x-full');
+          sidebarOverlay.classList.add('hidden');
+        });
+      }
+
+    block scripts

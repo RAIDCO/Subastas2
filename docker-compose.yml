@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   aplicacion:
     build: .
@@ -7,26 +5,11 @@ services:
     restart: always
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       - PUERTO=3000
       - NODE_ENV=desarrollo
-      - BD_URL=postgresql://postgres:clave_postgres@base_datos:5432/postgres
-      - JWT_SECRETO=clave_secreta_super_segura_subastas
-    depends_on:
-      - base_datos
-
-  base_datos:
-    image: postgres:15-alpine
-    container_name: postgres_subastas
-    restart: always
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: clave_postgres
-    ports:
-      - "5432:5432"
     volumes:
-      - datos_postgres:/var/lib/postgresql/data
-
-volumes:
-  datos_postgres:
+      - .:/app
+      - /app/node_modules
