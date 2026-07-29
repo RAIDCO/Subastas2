@@ -1,1 +1,60 @@
 //- Formulario de registro de nuevo usuario
+doctype html
+html(lang="es")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title= titulo
+    script(src="https://cdn.tailwindcss.com")
+
+  body(class="bg-slate-950 flex items-center justify-center min-h-screen")
+
+    .w-full.max-w-md.bg-slate-900/60.border.border-slate-800.rounded-2xl.shadow-xl.p-8
+
+      h1.text-3xl.font-bold.text-center.text-white.mb-2 Crear una Cuenta
+      p.text-center.text-slate-400.mb-8 Regístrate gratis y empieza a pujar.
+
+      form(action="/api/autenticacion/registro" method="POST" class="space-y-5")
+
+        div
+          label.block.text-slate-300.mb-2 Nombre completo
+          input.w-full.bg-slate-800.border.border-slate-700.rounded-lg.p-3.text-white(
+          type="text"
+          name="nombre"
+          placeholder="María González"
+          required)
+
+        div
+          label.block.text-slate-300.mb-2 Correo electrónico
+          input.w-full.bg-slate-800.border.border-slate-700.rounded-lg.p-3.text-white(
+          type="email"
+          name="correo"
+          placeholder="tu@correo.com"
+          required)
+
+        div
+          label.block.text-slate-300.mb-2 Contraseña
+          input.w-full.bg-slate-800.border.border-slate-700.rounded-lg.p-3.text-white(
+          type="password"
+          name="clave"
+          placeholder="********"
+          required)
+
+        div
+          label.block.text-slate-300.mb-2 Confirmar contraseña
+          input.w-full.bg-slate-800.border.border-slate-700.rounded-lg.p-3.text-white(
+          type="password"
+          name="confirmarClave"
+          placeholder="********"
+          required)
+
+        label.flex.items-center.gap-2.text-slate-400
+          input(type="checkbox" required)
+          | Acepto los términos y condiciones
+
+        button.w-full.bg-emerald-500.hover:bg-emerald-600.text-white.font-semibold.py-3.rounded-lg
+          | Crear Cuenta
+
+      p.text-center.text-slate-400.mt-6
+        | ¿Ya tienes cuenta?
+        a.text-emerald-400.ml-1.hover:underline(href="/iniciar-sesion") Inicia sesión
