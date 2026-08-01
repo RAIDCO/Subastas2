@@ -1,5 +1,187 @@
-extends ../disenos/principal.pug
+doctype html
+html(lang="es", class="scroll-smooth")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title SubastasPro - Plataforma de Subastas en Tiempo Real
+    script(src="https://cdn.tailwindcss.com")
+  body(class="bg-[#0b0f17] text-white font-sans antialiased min-h-screen")
 
-block contenido
-  h1 Aplicación de Subastas
-  p El servidor está funcionando correctamente en el puerto 3000.
+    nav(class="border-b border-slate-800/80 bg-[#0b0f17]/90 backdrop-blur sticky top-0 z-50 px-6 py-4")
+      div(class="max-w-7xl mx-auto flex items-center justify-between")
+        a(href="/", class="flex items-center gap-2 text-xl font-bold tracking-tight text-white")
+          div(class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-bold") 🔨
+          span SubastasPro
+
+        div(class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300")
+          a(href="/#inicio", class="hover:text-emerald-400 transition-colors") Inicio
+          a(href="/#como-funciona", class="hover:text-emerald-400 transition-colors") Cómo Funciona
+          a(href="/#subastas-destacadas", class="hover:text-emerald-400 transition-colors") Subastas Destacadas
+          a(href="/#caracteristicas", class="hover:text-emerald-400 transition-colors") Características
+
+        div(class="flex items-center gap-4 text-sm")
+          a(href="/login", class="font-medium text-slate-300 hover:text-white px-3 py-2 transition-colors") Iniciar Sesión
+          a(href="/registro", class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-4 py-2 rounded-lg transition-all shadow-lg shadow-emerald-500/20") Registrarse
+
+    section#inicio(class="max-w-7xl mx-auto px-6 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center")
+      div(class="space-y-6")
+        div(class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold")
+          span(class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse")
+          span Subastas en vivo ahora mismo
+        
+        h1(class="text-4xl md:text-6xl font-extrabold leading-tight tracking-tight")
+          | Puja y gana en 
+          span(class="text-emerald-400") tiempo real
+          |  sin interrupciones
+
+        p(class="text-slate-400 text-lg leading-relaxed max-w-xl")
+          | SubastasPro usa un temporizador inteligente por inactividad: la subasta se mantiene abierta mientras haya pujas y cierra automáticamente cuando nadie supera la oferta. Justo, transparente y emocionante.
+
+        div(class="flex flex-wrap gap-4 pt-2")
+          a(href="/#subastas-destacadas", class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20")
+            span Explorar Subastas
+            span →
+          a(href="/registro", class="bg-slate-800 hover:bg-slate-700 text-white font-medium px-6 py-3 rounded-lg border border-slate-700 transition-all")
+            | Crear Cuenta
+
+        div(class="flex flex-wrap items-center gap-6 pt-6 border-t border-slate-800/60 text-xs text-slate-400")
+          div(class="flex items-center gap-2")
+            span ⏱️
+            span Cierre por inactividad
+          div(class="flex items-center gap-2")
+            span 🛡️
+            span Vendedores verificados
+          div(class="flex items-center gap-2")
+            span ⚡
+            span Notificaciones en vivo
+
+      div(class="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 shadow-2xl")
+        img(src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop", alt="Vista previa subasta", class="w-full h-[420px] object-cover")
+        div(class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950/95 via-slate-950/70 to-transparent p-6 flex justify-between items-end")
+          div
+            p(class="text-xs text-slate-400 uppercase tracking-wider font-medium") Puja actual
+            p(class="text-2xl font-bold text-white") $3,450
+          div(class="text-right")
+            p(class="text-xs text-slate-400 uppercase tracking-wider font-medium") Cierra en
+            p(class="text-xl font-mono font-bold text-rose-500") 03:45
+
+    section#como-funciona(class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-800/60")
+      div(class="text-center max-w-2xl mx-auto mb-16 space-y-3")
+        p(class="text-emerald-400 font-semibold text-xs uppercase tracking-widest") CÓMO FUNCIONA
+        h2(class="text-3xl md:text-4xl font-bold") Cuatro pasos para empezar a ganar
+        p(class="text-slate-400 text-sm") Diseñado para ser justo y adictivo. Sin sorpresas ni cierres abruptos: solo pujas hasta que ganes.
+
+      div(class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6")
+        div(class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 relative hover:border-slate-700 transition-all")
+          div(class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-6") 👤
+          span(class="absolute top-6 right-6 text-4xl font-extrabold text-slate-800 select-none") 1
+          h3(class="text-lg font-bold mb-2") Regístrate
+          p(class="text-slate-400 text-xs leading-relaxed") Crea tu cuenta gratis en segundos y verifica tu perfil para empezar a participar.
+
+        div(class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 relative hover:border-slate-700 transition-all")
+          div(class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-6") 🔨
+          span(class="absolute top-6 right-6 text-4xl font-extrabold text-slate-800 select-none") 2
+          h3(class="text-lg font-bold mb-2") Elige o publica
+          p(class="text-slate-400 text-xs leading-relaxed") Explora subastas activas o publica la tuya. Los administradores aprueban cada artículo.
+
+        div(class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 relative hover:border-slate-700 transition-all")
+          div(class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-6") ⏱️
+          span(class="absolute top-6 right-6 text-4xl font-extrabold text-slate-800 select-none") 3
+          h3(class="text-lg font-bold mb-2") Puja en tiempo real
+          p(class="text-slate-400 text-xs leading-relaxed") Compite en vivo con la regla de inactividad: si nadie supera tu puja, la subasta cierra.
+
+        div(class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 relative hover:border-slate-700 transition-all")
+          div(class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-6") 🏆
+          span(class="absolute top-6 right-6 text-4xl font-extrabold text-slate-800 select-none") 4
+          h3(class="text-lg font-bold mb-2") ¡Gana el último postor!
+          p(class="text-slate-400 text-xs leading-relaxed") El último en pujar antes del cierre se lleva el artículo. Simple y transparente.
+
+    section#subastas-destacadas(class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-800/60")
+      div(class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4")
+        div(class="space-y-2")
+          p(class="text-emerald-400 font-semibold text-xs uppercase tracking-widest") SUBASTAS DESTACADAS
+          h2(class="text-3xl md:text-4xl font-bold") Pujas calientes ahora mismo
+        a(href="#", class="text-sm font-semibold text-slate-300 hover:text-emerald-400 flex items-center gap-1 transition-colors")
+          span Ver todas
+          span →
+
+      div(class="grid md:grid-cols-3 gap-6")
+        if subastasDestacadas && subastasDestacadas.length
+          each subasta in subastasDestacadas
+            div(class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition-all group")
+              div(class="relative h-56 overflow-hidden")
+                img(src=subasta.imagen, alt=subasta.titulo, class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300")
+                span(class="absolute top-3 left-3 bg-slate-950/80 backdrop-blur text-slate-300 text-xs font-medium px-3 py-1 rounded-full")= subasta.categoria
+                span(class="absolute top-3 right-3 bg-rose-500/90 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1")
+                  span(class="w-1.5 h-1.5 rounded-full bg-white animate-ping")
+                  span EN VIVO
+              div(class="p-5 space-y-4")
+                h3(class="font-bold text-lg text-white group-hover:text-emerald-400 transition-colors")= subasta.titulo
+                div(class="flex items-center justify-between text-xs text-slate-400 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50")
+                  div
+                    p Oferta más alta
+                    p(class="text-lg font-bold text-emerald-400")= subasta.precio
+                  div(class="text-right")
+                    p(class="flex items-center gap-1 text-slate-400") ⏱️ Cierra en
+                    p(class="text-sm font-mono font-bold text-white")= subasta.tiempoRestante
+                button(class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl transition-all shadow-md shadow-emerald-500/10")
+                  | Pujar Ahora
+        else
+          div(class="col-span-3 text-center py-12 text-slate-500")
+            p No hay subastas activas por el momento.
+
+    section#caracteristicas(class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-800/60")
+      div(class="text-center max-w-2xl mx-auto mb-16 space-y-3")
+        p(class="text-emerald-400 font-semibold text-xs uppercase tracking-widest") CARACTERÍSTICAS PRINCIPALES
+        h2(class="text-3xl md:text-4xl font-bold") Tecnología pensada para pujas justas
+
+      div(class="grid md:grid-cols-3 gap-6")
+        div(class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all space-y-4")
+          div(class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center") ⏱️
+          h3(class="text-lg font-bold") Regla de inactividad
+          p(class="text-slate-400 text-xs leading-relaxed") Si nadie puja durante el tiempo establecido, la subasta se cierra automáticamente. Nada de cierres injustos: mientras haya interés, la puja sigue viva.
+
+        div(class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all space-y-4")
+          div(class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center") 🛡️
+          h3(class="text-lg font-bold") Aprobación de administradores
+          p(class="text-slate-400 text-xs leading-relaxed") Cada artículo publicado es revisado y aprobado por nuestro equipo antes de salir en vivo, garantizando calidad y confianza en cada subasta.
+
+        div(class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all space-y-4")
+          div(class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center") 🔔
+          h3(class="text-lg font-bold") Notificaciones en vivo
+          p(class="text-slate-400 text-xs leading-relaxed") Recibe alertas instantáneas cuando alguien supera tu puja o cuando una subasta está por cerrar. Nunca pierdas el momento decisivo.
+
+    footer(class="border-t border-slate-800/80 bg-slate-950 py-16 text-xs text-slate-400")
+      div(class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-10")
+        div(class="space-y-4")
+          div(class="flex items-center gap-2 text-lg font-bold text-white")
+            div(class="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 text-xs") 🔨
+            span SubastasPro
+          p(class="text-slate-400 leading-relaxed") La plataforma de subastas en tiempo real con temporizador inteligente por inactividad. Puja, gana y vende con confianza.
+
+        div(class="space-y-3")
+          h4(class="font-semibold text-white uppercase tracking-wider text-[11px]") Enlaces rápidos
+          ul(class="space-y-2")
+            li: a(href="/#subastas-destacadas", class="hover:text-emerald-400 transition-colors") Explorar Subastas
+            li: a(href="/registro", class="hover:text-emerald-400 transition-colors") Publicar Subasta
+            li: a(href="/#como-funciona", class="hover:text-emerald-400 transition-colors") Cómo Funciona
+            li: a(href="/login", class="hover:text-emerald-400 transition-colors") Iniciar Sesión
+
+        div(class="space-y-3")
+          h4(class="font-semibold text-white uppercase tracking-wider text-[11px]") Legal
+          ul(class="space-y-2")
+            li: a(href="#", class="hover:text-emerald-400 transition-colors") Términos y Condiciones
+            li: a(href="#", class="hover:text-emerald-400 transition-colors") Política de Privacidad
+            li: a(href="#", class="hover:text-emerald-400 transition-colors") Centro de Ayuda
+            li: a(href="#", class="hover:text-emerald-400 transition-colors") Contacto
+
+        div(class="space-y-3")
+          h4(class="font-semibold text-white uppercase tracking-wider text-[11px]") Mantente al día
+          p(class="text-slate-400") Recibe las mejores subastas directo en tu correo.
+          form(class="flex gap-2", onsubmit="return false;")
+            input(type="email", placeholder="tu@correo.com", class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-white w-full focus:outline-none focus:border-emerald-500")
+            button(type="submit", class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-4 py-2 rounded-lg transition-colors") Suscribir
+
+      div(class="max-w-7xl mx-auto px-6 mt-12 pt-8 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-500")
+        p © 2026 SubastasPro. Todos los derechos reservados.
+        p Hecho con pasión por las subastas.
