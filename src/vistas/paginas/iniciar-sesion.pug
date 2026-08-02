@@ -3,45 +3,37 @@ doctype html
 html(lang="es")
   head
     meta(charset="UTF-8")
-    meta(name="viewport", content="width=device-width, initial-scale=1.0")
-    title= titulo
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title= titulo || 'Iniciar Sesión - SubastasPro'
     script(src="https://cdn.tailwindcss.com")
 
-  body(class="bg-slate-950 flex items-center justify-center min-h-screen")
+  body(class="bg-slate-950 flex items-center justify-center min-h-screen font-sans antialiased")
 
-    .w-full.max-w-md.bg-slate-900/60.border.border-slate-800.rounded-2xl.shadow-xl.p-8
+    div(class="w-full max-w-md bg-slate-900/60 border border-slate-800 rounded-2xl shadow-xl p-8 backdrop-blur-xl")
 
-      h1.text-3xl.font-bold.text-center.text-white.mb-2 Iniciar Sesión en SubastasPro
-      p.text-center.text-slate-400.mb-8 Ingresa tus datos para continuar.
+      h1(class="text-3xl font-bold text-center text-white mb-2") Iniciar Sesión en SubastasPro
+      p(class="text-center text-slate-400 mb-8") Ingresa tus datos para continuar.
 
       form(action="/api/autenticacion/login" method="POST" class="space-y-5")
 
         div
-          label.block.text-slate-300.mb-2 Correo electrónico
-          input.w-full.bg-slate-800.border.border-slate-700.rounded-lg.p-3.text-white(
-          type="email"
-          name="correo"
-          placeholder="tu@correo.com"
-          required)
+          label(class="block text-slate-300 mb-2 text-sm font-medium") Correo electrónico
+          input(type="email" name="correo" placeholder="tu@correo.com" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
 
         div
-          label.block.text-slate-300.mb-2 Contraseña
-          input.w-full.bg-slate-800.border.border-slate-700.rounded-lg.p-3.text-white(
-          type="password"
-          name="clave"
-          placeholder="********"
-          required)
+          label(class="block text-slate-300 mb-2 text-sm font-medium") Contraseña
+          input(type="password" name="clave" placeholder="********" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
 
-        .flex.justify-between.items-center
-          label.flex.items-center.gap-2.text-slate-400
-            input(type="checkbox")
+        div(class="flex justify-between items-center text-sm")
+          label(class="flex items-center gap-2 text-slate-400")
+            input(type="checkbox" class="rounded border-slate-700 bg-slate-800 text-emerald-500")
             | Recordarme
 
-          a.text-emerald-400.hover:underline(href="#") ¿Olvidaste tu contraseña?
+          a(href="#" class="text-emerald-400 hover:underline") ¿Olvidaste tu contraseña?
 
-        button.w-full.bg-emerald-500.hover:bg-emerald-600.text-white.font-semibold.py-3.rounded-lg
+        button(type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
           | Iniciar Sesión
 
-      p.text-center.text-slate-400.mt-6
+      p(class="text-center text-slate-400 text-sm mt-6")
         | ¿No tienes cuenta?
-        a.text-emerald-400.ml-1.hover:underline(href="/registro") Regístrate aquí
+        a(href="/registro" class="text-emerald-400 ml-1 hover:underline font-medium") Regístrate aquí

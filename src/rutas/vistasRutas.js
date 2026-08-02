@@ -41,17 +41,17 @@ router.get('/historial', (req, res) => {
   });
 });
 
-// Vista de iniciar sesión
-router.get('/iniciar-sesion', (req, res) => {
+// Vista de iniciar sesión (soporta /iniciar-sesion y /login)
+router.get(['/iniciar-sesion', '/login'], (req, res) => {
   res.render('paginas/iniciar-sesion', {
-    titulo: 'Iniciar Sesión'
+    titulo: 'Iniciar Sesión - SubastasPro'
   });
 });
 
 // Vista de registro
 router.get('/registro', (req, res) => {
   res.render('paginas/registro', {
-    titulo: 'Registro de Usuario'
+    titulo: 'Registro de Usuario - SubastasPro'
   });
 });
 
