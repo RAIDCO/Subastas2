@@ -12,17 +12,29 @@ html(lang="es")
     div(class="w-full max-w-md bg-slate-900/60 border border-slate-800 rounded-2xl shadow-xl p-8 backdrop-blur-xl")
 
       h1(class="text-3xl font-bold text-center text-white mb-2") Iniciar Sesión en SubastasPro
-      p(class="text-center text-slate-400 mb-8") Ingresa tus datos para continuar.
+      p(class="text-center text-slate-400 mb-6") Ingresa tus datos para continuar.
 
-      form(action="/api/autenticacion/login" method="POST" class="space-y-5")
+      //- Alerta de error
+      div(id="alerta-error" class="hidden mb-6 bg-red-500/10 border border-red-500/30 text-red-400 text-sm p-4 rounded-xl flex items-center gap-2")
+        svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+          path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
+        span(id="mensaje-error")
+
+      //- Alerta de éxito
+      div(id="alerta-exito" class="hidden mb-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm p-4 rounded-xl flex items-center gap-2")
+        svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+          path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7")
+        span ¡Sesión iniciada! Redirigiendo a las subastas...
+
+      form(id="form-login" class="space-y-5")
 
         div
           label(class="block text-slate-300 mb-2 text-sm font-medium") Correo electrónico
-          input(type="email" name="correo" placeholder="tu@correo.com" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          input(type="email" id="correo" name="correo" placeholder="tu@correo.com" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
 
         div
           label(class="block text-slate-300 mb-2 text-sm font-medium") Contraseña
-          input(type="password" name="clave" placeholder="********" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          input(type="password" id="clave" name="clave" placeholder="********" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
 
         div(class="flex justify-between items-center text-sm")
           label(class="flex items-center gap-2 text-slate-400")
@@ -31,9 +43,58 @@ html(lang="es")
 
           a(href="#" class="text-emerald-400 hover:underline") ¿Olvidaste tu contraseña?
 
-        button(type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
+        button(type="submit" id="btn-submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
           | Iniciar Sesión
 
       p(class="text-center text-slate-400 text-sm mt-6")
         | ¿No tienes cuenta?
         a(href="/registro" class="text-emerald-400 ml-1 hover:underline font-medium") Regístrate aquí
+
+    script.
+      const form = document.getElementById('form-login');
+      const alertaError = document.getElementById('alerta-error');
+      const mensajeError = document.getElementById('mensaje-error');
+      const alertaExito = document.getElementById('alerta-exito');
+      const btnSubmit = document.getElementById('btn-submit');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        alertaError.classList.add('hidden');
+        alertaExito.classList.add('hidden');
+
+        const correo = document.getElementById('correo').value;
+        const clave = document.getElementById('clave').value;
+
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Iniciando sesión...';
+
+        try {
+          const respuesta = await fetch('/api/autenticacion/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo, clave })
+          });
+
+          const datos = await respuesta.json();
+
+          if (datos.exito) {
+            alertaExito.classList.remove('hidden');
+            if (datos.datos && datos.datos.token) {
+              localStorage.setItem('token', datos.datos.token);
+            }
+            setTimeout(() => {
+              window.location.href = '/subastas';
+            }, 1000);
+          } else {
+            mensajeError.textContent = datos.mensaje || 'Error al iniciar sesión.';
+            alertaError.classList.remove('hidden');
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Iniciar Sesión';
+          }
+        } catch (err) {
+          mensajeError.textContent = 'Error de conexión con el servidor.';
+          alertaError.classList.remove('hidden');
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Iniciar Sesión';
+        }
+      });

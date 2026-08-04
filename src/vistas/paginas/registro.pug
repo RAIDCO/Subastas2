@@ -12,33 +12,100 @@ html(lang="es")
     div(class="w-full max-w-md bg-slate-900/60 border border-slate-800 rounded-2xl shadow-xl p-8 backdrop-blur-xl")
 
       h1(class="text-3xl font-bold text-center text-white mb-2") Crear una Cuenta
-      p(class="text-center text-slate-400 mb-8") Regístrate gratis y empieza a pujar.
+      p(class="text-center text-slate-400 mb-6") Regístrate gratis y empieza a pujar.
 
-      form(action="/api/autenticacion/registro" method="POST" class="space-y-5")
+      //- Alerta de error
+      div(id="alerta-error" class="hidden mb-6 bg-red-500/10 border border-red-500/30 text-red-400 text-sm p-4 rounded-xl flex items-center gap-2")
+        svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+          path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
+        span(id="mensaje-error")
+
+      //- Alerta de éxito
+      div(id="alerta-exito" class="hidden mb-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm p-4 rounded-xl flex items-center gap-2")
+        svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+          path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7")
+        span ¡Cuenta creada correctamente! Redirigiendo al inicio de sesión...
+
+      form(id="form-registro" class="space-y-5")
 
         div
           label(class="block text-slate-300 mb-2 text-sm font-medium") Nombre completo
-          input(type="text" name="nombre" placeholder="María González" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          input(type="text" id="nombre" name="nombre" placeholder="María González" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
 
         div
           label(class="block text-slate-300 mb-2 text-sm font-medium") Correo electrónico
-          input(type="email" name="correo" placeholder="tu@correo.com" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          input(type="email" id="correo" name="correo" placeholder="tu@correo.com" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
 
         div
           label(class="block text-slate-300 mb-2 text-sm font-medium") Contraseña
-          input(type="password" name="clave" placeholder="********" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          input(type="password" id="clave" name="clave" placeholder="********" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
 
         div
           label(class="block text-slate-300 mb-2 text-sm font-medium") Confirmar contraseña
-          input(type="password" name="confirmarClave" placeholder="********" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          input(type="password" id="confirmarClave" name="confirmarClave" placeholder="********" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
 
         label(class="flex items-center gap-2 text-slate-400 text-sm")
           input(type="checkbox" required class="rounded border-slate-700 bg-slate-800 text-emerald-500")
           | Acepto los términos y condiciones
 
-        button(type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
+        button(type="submit" id="btn-submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
           | Crear Cuenta
 
       p(class="text-center text-slate-400 text-sm mt-6")
         | ¿Ya tienes cuenta?
-        a(href="/iniciar-sesion" class="text-emerald-400 ml-1 hover:underline font-medium") Inicia sesión
+        a(href="/login" class="text-emerald-400 ml-1 hover:underline font-medium") Inicia sesión
+
+    script.
+      const form = document.getElementById('form-registro');
+      const alertaError = document.getElementById('alerta-error');
+      const mensajeError = document.getElementById('mensaje-error');
+      const alertaExito = document.getElementById('alerta-exito');
+      const btnSubmit = document.getElementById('btn-submit');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        alertaError.classList.add('hidden');
+        alertaExito.classList.add('hidden');
+
+        const nombre = document.getElementById('nombre').value;
+        const correo = document.getElementById('correo').value;
+        const clave = document.getElementById('clave').value;
+        const confirmarClave = document.getElementById('confirmarClave').value;
+
+        if (clave !== confirmarClave) {
+          mensajeError.textContent = 'Las contraseñas no coinciden.';
+          alertaError.classList.remove('hidden');
+          return;
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Creando cuenta...';
+
+        try {
+          const respuesta = await fetch('/api/autenticacion/registro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, correo, clave })
+          });
+
+          const datos = await respuesta.json();
+
+          if (datos.exito) {
+            alertaExito.classList.remove('hidden');
+            form.reset();
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 1500);
+          } else {
+            mensajeError.textContent = datos.mensaje || 'Error al crear la cuenta.';
+            alertaError.classList.remove('hidden');
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Crear Cuenta';
+          }
+        } catch (err) {
+          mensajeError.textContent = 'Error de conexión con el servidor.';
+          alertaError.classList.remove('hidden');
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Crear Cuenta';
+        }
+      });
