@@ -113,7 +113,25 @@ const cargarUsuarioSiExiste = async (req, res, next) => {
     return next();
 };
 
+//====================================
+// SESIÓN OBLIGATORIA EN VISTAS
+// Hace lo mismo que verificarAutenticacion, pero pensado para las
+// páginas Pug: en vez de responder un 401 en JSON (que el navegador
+// mostraría como texto plano), manda al formulario de inicio de sesión.
+//====================================
+
+const requiereSesionVista = (req, res, next) => {
+    cargarUsuarioSiExiste(req, res, () => {
+        if (!req.usuario) {
+            return res.redirect("/iniciar-sesion");
+        }
+
+        return next();
+    });
+};
+
 module.exports = {
     verificarAutenticacion,
-    cargarUsuarioSiExiste
+    cargarUsuarioSiExiste,
+    requiereSesionVista
 };

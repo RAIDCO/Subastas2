@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { Subasta, Usuario, Categoria } = require('../modelos');
 
+const { requiereSesionVista } = require('../intermediarios/autenticacionIntermediario');
+const { obtenerHistorialUsuario } = require('../controladores/usuarioControlador');
+
 // Ruta principal / Landing Page
 router.get('/', (req, res) => {
   res.render('paginas/inicio', {
@@ -29,15 +32,8 @@ router.get('/subastas/:id', (req, res) => {
   });
 });
 
-// Historial de subastas del usuario
-router.get('/historial', (req, res) => {
-  res.render('paginas/historial', {
-    titulo: 'Mi Historial - SubastasPro',
-    paginaActual: 'historial',
-    historial: [],
-    usuario: null
-  });
-});
+// Historial de subastas (ruta protegida: sin sesión redirige al login)
+router.get('/historial', requiereSesionVista, obtenerHistorialUsuario);
 
 // Panel de administración (moderación de subastas pendientes)
 router.get('/admin', async (req, res) => {
