@@ -33,8 +33,8 @@ router.get('/subastas/:id', (req, res) => {
   });
 });
 
-// Historial de subastas 
-router.get('/historial', cargarUsuarioSiExiste, obtenerHistorialUsuario);
+// Historial de subastas (ruta protegida: sin sesión redirige al login)
+router.get('/historial', requiereSesionVista, obtenerHistorialUsuario);
 
 // Vista de iniciar sesión (soporta /iniciar-sesion y /login)
 router.get(['/iniciar-sesion', '/login'], (req, res) => {
