@@ -1,66 +1,60 @@
 extends ../disenos/autenticado.pug
 
 block contenido
+  div(class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8")
 
-    .max-w-7xl.mx-auto.p-8
+    div(class="mb-8")
+      h1(class="text-3xl font-bold text-white mb-2") Panel de Moderación de Subastas
+      p(class="text-slate-400") Administra las subastas pendientes de aprobación antes de hacerlas públicas.
 
-        h1.text-4xl.font-bold.text-white.mb-2 Panel de Moderación de Subastas
+    if subastas && subastas.length > 0
 
-        p.text-slate-400.mb-8
-            | Administra las subastas pendientes de aprobación.
+      div(class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-xl")
+        div(class="overflow-x-auto")
 
-        if subastas && subastas.length > 0
+          table(class="w-full text-left border-collapse")
 
-            .overflow-x-auto
+            thead(class="bg-slate-800/80 text-slate-300 text-xs font-semibold uppercase tracking-wider border-b border-slate-700")
+              tr
+                th(class="p-4") Título
+                th(class="p-4") Usuario
+                th(class="p-4") Categoría
+                th(class="p-4") Estado
+                th(class="p-4 text-center") Acciones
 
-                table.w-full.bg-slate-900.border.border-slate-800.rounded-lg
+            tbody(class="divide-y divide-slate-800 text-sm")
 
-                    thead.bg-emerald-600
+              each subasta in subastas
+                tr(class="hover:bg-slate-800/40 transition-colors")
 
-                        tr
-                            th.p-4.text-left.text-white Título
-                            th.p-4.text-left.text-white Usuario
-                            th.p-4.text-left.text-white Categoría
-                            th.p-4.text-left.text-white Estado
-                            th.p-4.text-center.text-white Acciones
+                  td(class="p-4 font-semibold text-white")= subasta.titulo
 
-                    tbody
+                  td(class="p-4 text-slate-300")= subasta.Usuario ? subasta.Usuario.nombre : 'Usuario desconocido'
 
-                        each subasta in subastas
+                  td(class="p-4 text-slate-300")
+                    span(class="bg-slate-800 text-slate-300 text-xs font-medium px-2.5 py-1 rounded-full border border-slate-700")= subasta.Categoria ? subasta.Categoria.nombre : 'General'
 
-                            tr.border-b.border-slate-700
+                  td(class="p-4")
+                    span(class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold px-2.5 py-1 rounded-full")
+                      = subasta.estado.toUpperCase()
 
-                                td.p-4.text-white
-                                    = subasta.titulo
+                  td(class="p-4")
+                    div(class="flex items-center justify-center gap-3")
 
-                                td.p-4.text-slate-300
-                                    = subasta.Usuario.nombre
+                      form(action=`/api/administrador/aprobar/${subasta.id}` method="POST")
+                        button(type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs px-4 py-2 rounded-lg transition-colors shadow-md shadow-emerald-500/10")
+                          | Aprobar
 
-                                td.p-4.text-slate-300
-                                    = subasta.Categoria.nombre
+                      form(action=`/api/administrador/rechazar/${subasta.id}` method="POST")
+                        button(type="submit" class="bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/30 font-semibold text-xs px-4 py-2 rounded-lg transition-colors")
+                          | Rechazar
 
-                                td.p-4
-                                    span.bg-yellow-500.text-black.px-3.py-1.rounded
-                                        = subasta.estado
+    else
 
-                                td.p-4
+      div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center max-w-lg mx-auto mt-12")
+        div(class="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4")
+          svg(class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z")
 
-                                    .flex.justify-center.gap-2
-
-                                        form(action=`/api/administrador/aprobar/${subasta.id}` method="POST")
-                                            button.bg-emerald-600.hover:bg-emerald-700.text-white.px-4.py-2.rounded(type="submit")
-                                                | Aprobar
-
-                                        form(action=`/api/administrador/rechazar/${subasta.id}` method="POST")
-                                            button.bg-red-600.hover:bg-red-700.text-white.px-4.py-2.rounded(type="submit")
-                                                | Rechazar
-
-        else
-
-            .bg-slate-900.border.border-slate-800.rounded-lg.p-8.text-center
-
-                h2.text-white.text-2xl.mb-3
-                    | No hay subastas pendientes
-
-                p.text-slate-400
-                    | Todas las subastas ya fueron revisadas.
+        h2(class="text-white text-xl font-bold mb-2") No hay subastas pendientes
+        p(class="text-slate-400 text-sm") Todas las subastas publicadas han sido revisadas.

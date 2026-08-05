@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { Subasta, Usuario, Categoria } = require('../modelos');
 
 // Ruta principal / Landing Page
 router.get('/', (req, res) => {
@@ -10,7 +11,6 @@ router.get('/', (req, res) => {
 
 // Catálogo de subastas activas
 router.get('/subastas', (req, res) => {
-  // TODO: Obtener subastas de la BD cuando los modelos estén listos
   res.render('paginas/subastas', {
     titulo: 'Subastas Activas - SubastasPro',
     paginaActual: 'subastas',
@@ -21,7 +21,6 @@ router.get('/subastas', (req, res) => {
 
 // Detalle de una subasta individual
 router.get('/subastas/:id', (req, res) => {
-  // TODO: Buscar subasta por ID en la BD
   res.render('paginas/detalle-subasta', {
     titulo: 'Detalle de Subasta - SubastasPro',
     paginaActual: 'subastas',
@@ -32,13 +31,40 @@ router.get('/subastas/:id', (req, res) => {
 
 // Historial de subastas del usuario
 router.get('/historial', (req, res) => {
-  // TODO: Obtener historial de subastas del usuario autenticado
   res.render('paginas/historial', {
     titulo: 'Mi Historial - SubastasPro',
     paginaActual: 'historial',
     historial: [],
     usuario: null
   });
+});
+
+// Panel de administración (moderación de subastas pendientes)
+router.get('/admin', async (req, res) => {
+  try {
+    const subastas = await Subasta.findAll({
+      where: { estado: 'pendiente' },
+      include: [
+        { model: Usuario, attributes: ['id', 'nombre', 'correo'] },
+        { model: Categoria, attributes: ['id', 'nombre'] }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    res.render('paginas/panel-admin', {
+      titulo: 'Panel Admin - SubastasPro',
+      paginaActual: 'admin',
+      subastas,
+      usuario: null
+    });
+  } catch (error) {
+    res.render('paginas/panel-admin', {
+      titulo: 'Panel Admin - SubastasPro',
+      paginaActual: 'admin',
+      subastas: [],
+      usuario: null
+    });
+  }
 });
 
 // Vista de iniciar sesión (soporta /iniciar-sesion y /login)

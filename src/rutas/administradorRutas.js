@@ -11,25 +11,18 @@ const {
 /**
  * Obtener todas las subastas pendientes.
  */
-router.get(
-    "/pendientes",
-    obtenerSubastasPendientes
-);
+router.get("/pendientes", obtenerSubastasPendientes);
 
 /**
- * Aprobar una subasta.
+ * Aprobar una subasta (soporta POST y PUT).
  */
-router.put(
-    "/aprobar/:id",
-    aprobarSubasta
-);
+router.post("/aprobar/:id", aprobarSubasta);
+router.put("/aprobar/:id", aprobarSubasta);
 
 /**
- * Rechazar una subasta.
+ * Rechazar una subasta (soporta POST y PUT).
  */
-router.put(
-    "/rechazar/:id",
-    rechazarSubasta
-);
+router.post("/rechazar/:id", rechazarSubasta);
+router.put("/rechazar/:id", rechazarSubasta);
 
 module.exports = router;

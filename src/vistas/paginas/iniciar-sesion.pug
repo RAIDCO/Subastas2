@@ -24,7 +24,7 @@ html(lang="es")
       div(id="alerta-exito" class="hidden mb-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm p-4 rounded-xl flex items-center gap-2")
         svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7")
-        span ¡Sesión iniciada! Redirigiendo a las subastas...
+        span ¡Sesión iniciada! Redirigiendo...
 
       form(id="form-login" class="space-y-5")
 
@@ -79,11 +79,21 @@ html(lang="es")
 
           if (datos.exito) {
             alertaExito.classList.remove('hidden');
+            const usuario = datos.datos && datos.datos.usuario ? datos.datos.usuario : null;
+
             if (datos.datos && datos.datos.token) {
               localStorage.setItem('token', datos.datos.token);
             }
+            if (usuario) {
+              localStorage.setItem('usuario', JSON.stringify(usuario));
+            }
+
             setTimeout(() => {
-              window.location.href = '/subastas';
+              if (usuario && usuario.rol === 'administrador') {
+                window.location.href = '/admin';
+              } else {
+                window.location.href = '/subastas';
+              }
             }, 1000);
           } else {
             mensajeError.textContent = datos.mensaje || 'Error al iniciar sesión.';
