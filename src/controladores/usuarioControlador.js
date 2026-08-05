@@ -1,14 +1,13 @@
 // Controlador para la gestión del perfil de usuario y sus subastas creadas/ganadas
 const { Op } = require("sequelize");
+const bcrypt = require("bcryptjs");
 
 const { Subasta, Puja, Categoria, Usuario } = require("../modelos");
-
-const { capturarAsincrono } = require("../utilidades/manejadorErrores");
+const { CLAVE_LONGITUD_MINIMA, RONDAS_SAL } = require("../utilidades/constantes");
+const { responderExito, responderError, capturarAsincrono } = require("../utilidades/manejadorErrores");
 
 //====================================
 // ESTADOS DEL HISTORIAL
-// No son los estados de la subasta, sino el resultado de la
-// participación del usuario en ella.
 //====================================
 
 const ESTADOS_HISTORIAL = {
@@ -25,11 +24,6 @@ const ETIQUETAS_ESTADO = {
     [ESTADOS_HISTORIAL.CANCELADA]: "Cancelada"
 };
 
-//====================================
-// PESTAÑAS Y FILTROS DE LA VISTA
-// La clave viaja en la query string (/historial?estado=ganadas).
-//====================================
-
 const PESTANAS = [
     { clave: "todas", etiqueta: "Todas" },
     { clave: "en-curso", etiqueta: "En curso" },
@@ -41,13 +35,8 @@ const FILTROS = {
     todas: () => true,
     "en-curso": (registro) => registro.estado === ESTADOS_HISTORIAL.EN_CURSO,
     ganadas: (registro) => registro.estado === ESTADOS_HISTORIAL.GANADA,
-    // Finalizadas agrupa todo lo que ya cerró: ganadas, perdidas y canceladas
     finalizadas: (registro) => registro.estado !== ESTADOS_HISTORIAL.EN_CURSO
 };
-
-//====================================
-// RELACIONES QUE ACOMPAÑAN A CADA SUBASTA
-//====================================
 
 const INCLUIR_DATOS_SUBASTA = [
     {
@@ -62,40 +51,24 @@ const INCLUIR_DATOS_SUBASTA = [
     }
 ];
 
-//====================================
-// UTILIDADES
-//====================================
+const aNumero = (valor) => (valor === null || valor === undefined ? null : Number(valor));
 
-// Los DECIMAL de Postgres llegan como cadena: se normalizan a número
-const aNumero = (valor) =>
-    valor === null || valor === undefined ? null : Number(valor);
-
-//====================================
-// CLASIFICAR LA PARTICIPACIÓN
-// Ganada si el usuario es el ganador_id de una subasta cerrada,
-// perdida si cerró con otro ganador, y en curso mientras siga abierta.
-//====================================
+const usuarioPublico = (usuario) => ({
+    id: usuario.id,
+    nombre: usuario.nombre,
+    correo: usuario.correo,
+    rol: usuario.rol
+});
 
 const clasificarParticipacion = (subasta, usuarioId) => {
     if (subasta.estado === "rechazada") {
         return ESTADOS_HISTORIAL.CANCELADA;
     }
-
     if (subasta.estado === "finalizada") {
-        return subasta.ganador_id === usuarioId
-            ? ESTADOS_HISTORIAL.GANADA
-            : ESTADOS_HISTORIAL.PERDIDA;
+        return subasta.ganador_id === usuarioId ? ESTADOS_HISTORIAL.GANADA : ESTADOS_HISTORIAL.PERDIDA;
     }
-
-    // Pendiente y activa siguen abiertas para el usuario
     return ESTADOS_HISTORIAL.EN_CURSO;
 };
-
-//====================================
-// REGISTRO DEL HISTORIAL
-// Une los datos de la subasta con el resumen de las pujas
-// que el usuario hizo en ella.
-//====================================
 
 const construirRegistro = (subasta, pujas, usuarioId) => {
     const estado = clasificarParticipacion(subasta, usuarioId);
@@ -109,7 +82,6 @@ const construirRegistro = (subasta, pujas, usuarioId) => {
         mi_puja_maxima: pujas ? pujas.mi_puja_maxima : null,
         total_mis_pujas: pujas ? pujas.total_pujas : 0,
         ultima_puja_at: pujas ? pujas.ultima_puja_at : null,
-        // Cuando la subasta cerró, el precio actual ya es el precio final
         precio: aNumero(subasta.precio_actual),
         precio_es_final: subasta.estado === "finalizada",
         estado,
@@ -118,43 +90,23 @@ const construirRegistro = (subasta, pujas, usuarioId) => {
     };
 };
 
-//====================================
-// RESUMEN POR PESTAÑA
-// Se calcula sobre el historial completo para que los contadores
-// no cambien al aplicar un filtro.
-//====================================
-
 const calcularResumen = (registros) => {
     const resumen = {};
-
     PESTANAS.forEach(({ clave }) => {
         resumen[clave] = registros.filter(FILTROS[clave]).length;
     });
-
-    resumen.perdidas = registros.filter(
-        (registro) => registro.estado === ESTADOS_HISTORIAL.PERDIDA
-    ).length;
-
+    resumen.perdidas = registros.filter((registro) => registro.estado === ESTADOS_HISTORIAL.PERDIDA).length;
     return resumen;
 };
 
 //====================================
 // HISTORIAL DE SUBASTAS DEL USUARIO
 // GET /historial
-//
-// La ruta va detrás del intermediario requiereSesionVista, así que
-// aquí req.usuario siempre existe.
-//
-// Une Puja con Subasta para traer todas las subastas en las que el
-// usuario ofertó, y añade las que ganó aunque ya no conserve pujas.
 //====================================
 
 const obtenerHistorialUsuario = capturarAsincrono(async (req, res) => {
     const usuarioId = req.usuario.id;
-
     const filtroActual = FILTROS[req.query.estado] ? req.query.estado : "todas";
-
-    //---- 1. Subastas en las que el usuario participó ofertando ----
 
     const pujas = await Puja.findAll({
         where: { usuario_id: usuarioId },
@@ -169,8 +121,6 @@ const obtenerHistorialUsuario = capturarAsincrono(async (req, res) => {
         order: [["created_at", "DESC"]]
     });
 
-    // Una subasta puede tener varias pujas del mismo usuario: se agrupan
-    // para quedarnos con su puja más alta y cuántas veces ofertó.
     const participaciones = new Map();
 
     pujas.forEach((puja) => {
@@ -184,26 +134,19 @@ const obtenerHistorialUsuario = capturarAsincrono(async (req, res) => {
                 total_pujas: 1,
                 ultima_puja_at: puja.created_at
             });
-
             return;
         }
 
         acumulado.total_pujas += 1;
-
         if (monto > acumulado.mi_puja_maxima) {
             acumulado.mi_puja_maxima = monto;
         }
-
-        // Las pujas llegan ordenadas de más reciente a más antigua
         if (!acumulado.ultima_puja_at) {
             acumulado.ultima_puja_at = puja.created_at;
         }
     });
 
-    //---- 2. Subastas ganadas que no aparecieron entre sus pujas ----
-
     const idsConPujas = [...participaciones.keys()];
-
     const condicionGanadas = { ganador_id: usuarioId };
 
     if (idsConPujas.length > 0) {
@@ -215,21 +158,14 @@ const obtenerHistorialUsuario = capturarAsincrono(async (req, res) => {
         include: INCLUIR_DATOS_SUBASTA
     });
 
-    //---- 3. Unificar, clasificar y ordenar ----
-
     const registros = [
         ...[...participaciones.values()].map((participacion) =>
             construirRegistro(participacion.subasta, participacion, usuarioId)
         ),
-        ...soloGanadas.map((subasta) =>
-            construirRegistro(subasta, null, usuarioId)
-        )
+        ...soloGanadas.map((subasta) => construirRegistro(subasta, null, usuarioId))
     ];
 
-    // Lo más reciente primero: las que siguen abiertas quedan arriba
-    registros.sort(
-        (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-    );
+    registros.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
     return res.render("paginas/historial", {
         titulo: "Mi Historial - SubastasPro",
@@ -242,7 +178,97 @@ const obtenerHistorialUsuario = capturarAsincrono(async (req, res) => {
     });
 });
 
+//====================================
+// PERFIL DEL USUARIO
+//====================================
+
+const mostrarVistaPerfil = capturarAsincrono(async (req, res) => {
+    const usuario = await Usuario.findByPk(req.usuario.id, {
+        attributes: ["id", "nombre", "correo", "rol"]
+    });
+
+    if (!usuario) {
+        return res.status(404).render("paginas/inicio", {
+            titulo: "Usuario no encontrado",
+            mensajeError: "No se encontró el usuario solicitado."
+        });
+    }
+
+    return res.render("paginas/perfil", {
+        titulo: "Mi Perfil - SubastasPro",
+        paginaActual: "perfil",
+        usuario: usuarioPublico(usuario)
+    });
+});
+
+const obtenerPerfil = capturarAsincrono(async (req, res) => {
+    const usuario = await Usuario.findByPk(req.usuario.id, {
+        attributes: ["id", "nombre", "correo", "rol"]
+    });
+
+    if (!usuario) {
+        return responderError(res, 404, "Usuario no encontrado.");
+    }
+
+    return responderExito(res, 200, "Perfil obtenido correctamente.", {
+        usuario: usuarioPublico(usuario)
+    });
+});
+
+const actualizarPerfil = capturarAsincrono(async (req, res) => {
+    const { nombre, clave } = req.body || {};
+    const camposActualizados = {};
+
+    if (nombre !== undefined) {
+        const nombreLimpio = String(nombre).trim();
+
+        if (nombreLimpio.length < 3 || nombreLimpio.length > 120) {
+            return responderError(res, 400, "Datos inválidos.", {
+                nombre: "El nombre debe tener entre 3 y 120 caracteres."
+            });
+        }
+
+        camposActualizados.nombre = nombreLimpio;
+    }
+
+    if (clave !== undefined && String(clave).trim() !== "") {
+        const claveLimpia = String(clave).trim();
+
+        if (claveLimpia.length < CLAVE_LONGITUD_MINIMA) {
+            return responderError(res, 400, "Datos inválidos.", {
+                clave: `La nueva contraseña debe tener al menos ${CLAVE_LONGITUD_MINIMA} caracteres.`
+            });
+        }
+
+        const sal = await bcrypt.genSalt(RONDAS_SAL);
+        camposActualizados.clave = await bcrypt.hash(claveLimpia, sal);
+    }
+
+    if (Object.keys(camposActualizados).length === 0) {
+        return responderError(res, 400, "No se enviaron datos para actualizar.");
+    }
+
+    const [filasActualizadas] = await Usuario.update(camposActualizados, {
+        where: { id: req.usuario.id }
+    });
+
+    if (filasActualizadas === 0) {
+        return responderError(res, 404, "Usuario no encontrado.");
+    }
+
+    const usuarioActualizado = await Usuario.findByPk(req.usuario.id, {
+        attributes: ["id", "nombre", "correo", "rol"]
+    });
+
+    return responderExito(res, 200, "Perfil actualizado correctamente.", {
+        usuario: usuarioPublico(usuarioActualizado)
+    });
+});
+
 module.exports = {
     ESTADOS_HISTORIAL,
-    obtenerHistorialUsuario
+    obtenerHistorialUsuario,
+    mostrarVistaPerfil,
+    obtenerPerfil,
+    actualizarPerfil
 };

@@ -1,0 +1,121 @@
+extends ../disenos/autenticado.pug
+
+block contenido
+
+  h1(class="text-3xl font-bold text-white mb-8") Mi Perfil
+
+  //- Alerta de resultado (se muestra/oculta con JS al guardar cambios)
+  div(id="alerta-error" class="hidden mb-6 bg-red-500/10 border border-red-500/30 text-red-400 text-sm p-4 rounded-xl flex items-center gap-2")
+    svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+      path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
+    span(id="mensaje-error")
+
+  div(id="alerta-exito" class="hidden mb-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm p-4 rounded-xl flex items-center gap-2")
+    svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+      path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7")
+    span(id="mensaje-exito") Perfil actualizado correctamente.
+
+  div(class="grid grid-cols-1 md:grid-cols-3 gap-8")
+
+    //- Tarjeta principal con la información del usuario
+    div(class="md:col-span-1")
+      div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-center backdrop-blur-xl")
+
+        //- Avatar con la inicial del usuario
+        div(class="mx-auto w-24 h-24 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-3xl font-bold text-emerald-400 mb-4")
+          span= usuario ? usuario.nombre.charAt(0).toUpperCase() : 'U'
+
+        h2(class="text-xl font-semibold text-white")= usuario ? usuario.nombre : 'Nombre del usuario'
+        p(class="text-slate-400 text-sm mt-1")= usuario ? usuario.correo : 'correo@ejemplo.com'
+
+        span(class=`inline-block mt-4 px-3 py-1 rounded-full text-xs font-semibold ${usuario && usuario.rol === 'administrador' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-300 border border-slate-700'}`)
+          = usuario && usuario.rol === 'administrador' ? 'Administrador' : 'Usuario'
+
+    //- Formulario de edición de datos
+    div(class="md:col-span-2")
+      div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl")
+
+        h3(class="text-lg font-semibold text-white mb-6") Configuración de la cuenta
+
+        form(id="form-perfil" class="space-y-5")
+
+          div
+            label(class="block text-slate-300 mb-2 text-sm font-medium") Nuevo nombre
+            input(
+              type="text"
+              id="nuevoNombre"
+              name="nombre"
+              placeholder="Escribe tu nuevo nombre"
+              value=usuario ? usuario.nombre : ''
+              class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+            )
+
+          div
+            label(class="block text-slate-300 mb-2 text-sm font-medium") Nueva contraseña (opcional)
+            input(
+              type="password"
+              id="nuevaClave"
+              name="clave"
+              placeholder="Déjalo en blanco para no cambiarla"
+              class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+            )
+
+          button(
+            type="submit"
+            id="btn-guardar"
+            class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-lg shadow-emerald-500/20"
+          ) Guardar Cambios
+
+block scripts
+  script.
+    const formulario = document.getElementById('form-perfil');
+    const alertaError = document.getElementById('alerta-error');
+    const mensajeError = document.getElementById('mensaje-error');
+    const alertaExito = document.getElementById('alerta-exito');
+    const btnGuardar = document.getElementById('btn-guardar');
+
+    formulario.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      alertaError.classList.add('hidden');
+      alertaExito.classList.add('hidden');
+
+      const nombre = document.getElementById('nuevoNombre').value.trim();
+      const clave = document.getElementById('nuevaClave').value.trim();
+
+      const cuerpo = {};
+      if (nombre) cuerpo.nombre = nombre;
+      if (clave) cuerpo.clave = clave;
+
+      btnGuardar.disabled = true;
+      btnGuardar.textContent = 'Guardando...';
+
+      try {
+        const token = localStorage.getItem('token');
+
+        const respuesta = await fetch('/api/usuario/perfil', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: 'Bearer ' + token } : {})
+          },
+          credentials: 'include',
+          body: JSON.stringify(cuerpo)
+        });
+
+        const datos = await respuesta.json();
+
+        if (datos.exito) {
+          alertaExito.classList.remove('hidden');
+          document.getElementById('nuevaClave').value = '';
+        } else {
+          mensajeError.textContent = datos.mensaje || 'No se pudo actualizar el perfil.';
+          alertaError.classList.remove('hidden');
+        }
+      } catch (error) {
+        mensajeError.textContent = 'Error de conexión con el servidor.';
+        alertaError.classList.remove('hidden');
+      } finally {
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = 'Guardar Cambios';
+      }
+    });

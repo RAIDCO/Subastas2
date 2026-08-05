@@ -4,6 +4,7 @@ const path = require("path");
 const vistasRutas = require("./rutas/vistasRutas");
 const autenticacionRutas = require("./rutas/autenticacionRutas");
 const administradorRutas = require("./rutas/administradorRutas");
+const usuarioRutas = require("./rutas/usuarioRutas");
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.static(path.join(__dirname, "publico")));
 // Rutas
 app.use("/api/autenticacion", autenticacionRutas);
 app.use("/api/administrador", administradorRutas);
+app.use("/", usuarioRutas);
 app.use("/", vistasRutas);
 
 // Error 404
