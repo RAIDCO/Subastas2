@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
+const { requiereSesionVista } = require('../intermediarios/autenticacionIntermediario');
+const { obtenerHistorialUsuario } = require('../controladores/usuarioControlador');
+
 // Ruta principal / Landing Page
 router.get('/', (req, res) => {
   res.render('paginas/inicio', {
@@ -30,16 +33,8 @@ router.get('/subastas/:id', (req, res) => {
   });
 });
 
-// Historial de subastas del usuario
-router.get('/historial', (req, res) => {
-  // TODO: Obtener historial de subastas del usuario autenticado
-  res.render('paginas/historial', {
-    titulo: 'Mi Historial - SubastasPro',
-    paginaActual: 'historial',
-    historial: [],
-    usuario: null
-  });
-});
+// Historial de subastas 
+router.get('/historial', cargarUsuarioSiExiste, obtenerHistorialUsuario);
 
 // Vista de iniciar sesión (soporta /iniciar-sesion y /login)
 router.get(['/iniciar-sesion', '/login'], (req, res) => {
