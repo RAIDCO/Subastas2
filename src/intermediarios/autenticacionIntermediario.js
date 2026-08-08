@@ -130,8 +130,41 @@ const requiereSesionVista = (req, res, next) => {
     });
 };
 
+//====================================
+// REQUIERE ROL ADMINISTRADOR (VISTAS)
+// Después de cargar la sesión, verifica que el usuario sea admin.
+// Si no lo es, redirige a /subastas.
+//====================================
+
+const requiereAdminVista = (req, res, next) => {
+    if (!req.usuario || req.usuario.rol !== "administrador") {
+        return res.redirect("/subastas");
+    }
+
+    return next();
+};
+
+//====================================
+// REQUIERE ROL ADMINISTRADOR (API)
+// Para rutas API: devuelve un 403 JSON si el usuario no es admin.
+//====================================
+
+const requiereAdmin = (req, res, next) => {
+    if (!req.usuario || req.usuario.rol !== "administrador") {
+        return responderError(
+            res,
+            403,
+            "No tienes permisos de administrador para realizar esta acción."
+        );
+    }
+
+    return next();
+};
+
 module.exports = {
     verificarAutenticacion,
     cargarUsuarioSiExiste,
-    requiereSesionVista
+    requiereSesionVista,
+    requiereAdminVista,
+    requiereAdmin
 };

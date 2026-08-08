@@ -80,7 +80,7 @@ block contenido
                 if subasta.estado === 'activa'
                   div(class="text-right")
                     span(class="text-xs text-slate-500 block") Cierra en
-                    span(class="text-lg font-bold text-red-400 font-mono") 00:00
+                    span(class="cuenta-regresiva text-lg font-bold text-red-400 font-mono" data-fecha-fin=subasta.fecha_fin) --:--
 
   else
     //- Estado vacío: no hay subastas (skeleton/placeholder)
@@ -94,3 +94,36 @@ block contenido
         svg(class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4")
         span Publicar una Subasta
+
+block scripts
+  script.
+    function actualizarCuentasRegresivas() {
+      const elementos = document.querySelectorAll('.cuenta-regresiva');
+      const ahora = new Date().getTime();
+
+      elementos.forEach((el) => {
+        const fechaFinAttr = el.getAttribute('data-fecha-fin');
+        if (!fechaFinAttr) return;
+
+        const fechaFin = new Date(fechaFinAttr).getTime();
+        const diferencia = fechaFin - ahora;
+
+        if (diferencia <= 0) {
+          el.textContent = '00:00:00';
+          return;
+        }
+
+        const horas = Math.floor(diferencia / (1000 * 60 * 60));
+        const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
+        const segundos = Math.floor((diferencia % (1000 * 60)) / 1000);
+
+        const h = String(horas).padStart(2, '0');
+        const m = String(minutos).padStart(2, '0');
+        const s = String(segundos).padStart(2, '0');
+
+        el.textContent = horas > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
+      });
+    }
+
+    actualizarCuentasRegresivas();
+    setInterval(actualizarCuentasRegresivas, 1000);

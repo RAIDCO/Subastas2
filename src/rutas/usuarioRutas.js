@@ -10,11 +10,12 @@ const {
 } = require("../controladores/usuarioControlador");
 
 const {
-    verificarAutenticacion
+    verificarAutenticacion,
+    requiereSesionVista
 } = require("../intermediarios/autenticacionIntermediario");
 
 // GET /perfil -> renderiza la vista perfil.pug
-router.get("/perfil", verificarAutenticacion, mostrarVistaPerfil);
+router.get("/perfil", requiereSesionVista, mostrarVistaPerfil);
 
 // GET /api/usuario/perfil -> obtiene los datos del usuario logueado
 router.get("/api/usuario/perfil", verificarAutenticacion, obtenerPerfil);

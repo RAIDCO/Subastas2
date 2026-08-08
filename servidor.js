@@ -5,6 +5,7 @@ const { Server } = require("socket.io");
 
 const app = require("./src/aplicacion");
 const { testConnection } = require("./src/configuracion/baseDeDatos");
+const configurarSockets = require("./src/sockets/subastaSocket");
 
 // Cargar todos los modelos y sus relaciones
 require("./src/modelos");
@@ -18,14 +19,8 @@ const server = http.createServer(app);
 // Inicializar Socket.io
 const io = new Server(server);
 
-// Evento cuando un cliente se conecta
-io.on("connection", (socket) => {
-    console.log("[Socket.io] Cliente conectado por WebSocket.");
-
-    socket.on("disconnect", () => {
-        console.log("[Socket.io] Cliente desconectado.");
-    });
-});
+// Configurar los eventos de Socket.io para pujas en tiempo real
+configurarSockets(io);
 
 // Puerto del servidor
 const PORT = process.env.PUERTO || process.env.PORT || 3000;

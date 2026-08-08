@@ -1,1 +1,156 @@
-//- Vista detallada de una subasta: pujas en vivo, cronómetro e inactividad con Socket.io
+extends ../disenos/autenticado.pug
+
+block contenido
+  -
+    const formatearMonto = (valor) => {
+      if (valor === null || valor === undefined) return '—';
+      return '$' + Number(valor).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+    const formatearFecha = (valor) => {
+      if (!valor) return '—';
+      return new Date(valor).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    };
+    const estilosEstado = {
+      pendiente: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+      activa: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      finalizada: 'bg-slate-800 text-slate-400 border-slate-700',
+      rechazada: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+    };
+
+  if !subasta
+    div(class="text-center py-20")
+      h2(class="text-2xl font-bold text-white mb-2") Subasta no encontrada
+      p(class="text-slate-400") La subasta que buscas no existe o fue eliminada.
+      a(href="/subastas" class="inline-block mt-6 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors") Volver al catálogo
+
+  else
+    //- Header con título y estado
+    div(class="mb-6")
+      div(class="flex flex-wrap items-center gap-3 mb-2")
+        a(href="/subastas" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1 text-sm")
+          svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7")
+          span Volver al catálogo
+
+      h1(class="text-2xl lg:text-3xl font-bold text-white")= subasta.titulo
+      div(class="flex flex-wrap items-center gap-3 mt-2")
+        span(class=`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${estilosEstado[subasta.estado]}`)
+          if subasta.estado === 'activa'
+            span(class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse")
+          span= subasta.estado.toUpperCase()
+        if subasta.categoria
+          span(class="bg-slate-800 text-slate-300 text-xs font-medium px-2.5 py-1 rounded-full border border-slate-700")= subasta.categoria.nombre
+        if subasta.vendedor
+          span(class="text-slate-500 text-sm") Publicado por
+            span(class="text-slate-300 font-medium ml-1")= subasta.vendedor.nombre
+
+    //- Layout principal: 2 columnas
+    div(class="grid grid-cols-1 lg:grid-cols-3 gap-6")
+
+      //- Columna izquierda: imagen + descripción + info
+      div(class="lg:col-span-2 space-y-6")
+
+        //- Imagen de la subasta
+        div(class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden")
+          if subasta.imagen_url
+            img(src=subasta.imagen_url alt=subasta.titulo class="w-full h-64 lg:h-96 object-cover")
+          else
+            div(class="w-full h-64 lg:h-96 bg-slate-950 flex items-center justify-center")
+              svg(class="w-16 h-16 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+                path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z")
+
+        //- Descripción
+        div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6")
+          h3(class="text-lg font-bold text-white mb-3") Descripción
+          p(class="text-slate-300 leading-relaxed whitespace-pre-line")= subasta.descripcion
+
+        //- Información de la subasta
+        div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6")
+          h3(class="text-lg font-bold text-white mb-4") Detalles de la subasta
+          div(class="grid grid-cols-2 gap-4 text-sm")
+            div
+              p(class="text-slate-500 text-xs uppercase tracking-wide mb-1") Precio Inicial
+              p(class="text-white font-semibold")= formatearMonto(subasta.precio_inicial)
+            div
+              p(class="text-slate-500 text-xs uppercase tracking-wide mb-1") Tiempo de Inactividad
+              p(class="text-white font-semibold") #{subasta.tiempo_inactividad_minutos} minutos
+            div
+              p(class="text-slate-500 text-xs uppercase tracking-wide mb-1") Fecha de Publicación
+              p(class="text-white font-semibold")= formatearFecha(subasta.fecha_inicio)
+            div
+              p(class="text-slate-500 text-xs uppercase tracking-wide mb-1") Fecha Límite
+              p(class="text-white font-semibold")= formatearFecha(subasta.fecha_fin)
+
+      //- Columna derecha: panel de pujas en vivo
+      div(class="space-y-6")
+
+        //- Cronómetro gigante
+        div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-center")
+          if subasta.estado === 'activa'
+            p(class="text-slate-500 text-xs uppercase tracking-wide mb-2") Tiempo restante
+            div(id="cronometro" class="text-5xl font-extrabold text-white font-mono tracking-wider") --:--
+            p(class="text-slate-500 text-xs mt-2") Se reinicia con cada nueva puja
+          else if subasta.estado === 'finalizada'
+            p(class="text-slate-500 text-xs uppercase tracking-wide mb-2") Subasta finalizada
+            div(class="text-3xl font-extrabold text-slate-500 font-mono") 00:00
+            if subasta.ganador
+              div(class="mt-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4")
+                p(class="text-emerald-400 text-sm font-semibold") 🏆 Ganador
+                p(class="text-white text-lg font-bold")= subasta.ganador.nombre
+          else
+            p(class="text-slate-500 text-xs uppercase tracking-wide mb-2") Estado
+            p(class="text-xl font-bold text-amber-400")= subasta.estado === 'pendiente' ? 'Pendiente de aprobación' : 'Rechazada'
+
+        //- Precio actual y formulario de puja
+        div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6")
+          p(class="text-slate-500 text-xs uppercase tracking-wide mb-1") Precio actual
+          p(id="precio-actual" class="text-3xl font-extrabold text-emerald-400 mb-4")= formatearMonto(subasta.precio_actual)
+
+          if subasta.estado === 'activa'
+            //- Alerta de error de puja
+            div(id="alerta-puja-error" class="hidden mb-4 bg-red-500/10 border border-red-500/30 text-red-400 text-sm p-3 rounded-xl")
+              span(id="mensaje-puja-error")
+
+            //- Alerta de éxito de puja
+            div(id="alerta-puja-exito" class="hidden mb-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm p-3 rounded-xl")
+              span ¡Puja registrada correctamente!
+
+            div(class="flex gap-2")
+              input(type="number" id="monto-puja" step="0.01" min="0.01" placeholder="Ingresa tu puja" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+              button(type="button" id="btn-pujar" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20 whitespace-nowrap") Pujar
+
+            p(class="text-slate-500 text-xs mt-2") Puja mínima:
+              span(id="puja-minima" class="text-slate-300 ml-1")
+
+        //- Historial de pujas en vivo
+        div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6")
+          h3(class="text-lg font-bold text-white mb-4 flex items-center gap-2")
+            span Pujas en vivo
+            if subasta.estado === 'activa'
+              span(class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse")
+
+          div(id="lista-pujas" class="space-y-2 max-h-80 overflow-y-auto")
+            if pujas && pujas.length > 0
+              each puja in pujas
+                div(class="flex items-center justify-between bg-slate-800/50 rounded-xl px-4 py-3 border border-slate-700/50")
+                  div(class="flex items-center gap-3")
+                    div(class="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-400")= puja.usuario.charAt(0).toUpperCase()
+                    div
+                      p(class="text-sm font-semibold text-white")= puja.usuario
+                      p(class="text-xs text-slate-500")= formatearFecha(puja.fecha)
+                  p(class="text-emerald-400 font-bold")= formatearMonto(puja.monto)
+            else
+              div(class="text-center py-8")
+                p(class="text-slate-500 text-sm") Aún no hay pujas en esta subasta.
+                if subasta.estado === 'activa'
+                  p(class="text-slate-600 text-xs mt-1") ¡Sé el primero en pujar!
+
+  //- Datos para el JS del cliente (hidden)
+  if subasta
+    input(type="hidden" id="subasta-id" value=subasta.id)
+    input(type="hidden" id="subasta-estado" value=subasta.estado)
+    input(type="hidden" id="subasta-precio-actual" value=subasta.precio_actual)
+
+block scripts
+  if subasta && subasta.estado === 'activa'
+    script(src="/js/subasta-tiempo-real.js")

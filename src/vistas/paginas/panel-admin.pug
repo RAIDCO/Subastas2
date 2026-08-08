@@ -29,10 +29,10 @@ block contenido
 
                   td(class="p-4 font-semibold text-white")= subasta.titulo
 
-                  td(class="p-4 text-slate-300")= subasta.Usuario ? subasta.Usuario.nombre : 'Usuario desconocido'
+                  td(class="p-4 text-slate-300")= subasta.vendedor ? subasta.vendedor.nombre : 'Usuario desconocido'
 
                   td(class="p-4 text-slate-300")
-                    span(class="bg-slate-800 text-slate-300 text-xs font-medium px-2.5 py-1 rounded-full border border-slate-700")= subasta.Categoria ? subasta.Categoria.nombre : 'General'
+                    span(class="bg-slate-800 text-slate-300 text-xs font-medium px-2.5 py-1 rounded-full border border-slate-700")= subasta.categoria ? subasta.categoria.nombre : 'General'
 
                   td(class="p-4")
                     span(class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold px-2.5 py-1 rounded-full")

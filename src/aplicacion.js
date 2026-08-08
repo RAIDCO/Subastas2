@@ -5,6 +5,7 @@ const vistasRutas = require("./rutas/vistasRutas");
 const autenticacionRutas = require("./rutas/autenticacionRutas");
 const administradorRutas = require("./rutas/administradorRutas");
 const usuarioRutas = require("./rutas/usuarioRutas");
+const subastaRutas = require("./rutas/subastaRutas");
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(express.static(path.join(__dirname, "publico")));
 // Rutas
 app.use("/api/autenticacion", autenticacionRutas);
 app.use("/api/administrador", administradorRutas);
+app.use("/api/subastas", subastaRutas);
 app.use("/", usuarioRutas);
 app.use("/", vistasRutas);
 

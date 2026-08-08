@@ -8,6 +8,14 @@ const {
     rechazarSubasta
 } = require("../controladores/administradorControlador");
 
+const {
+    verificarAutenticacion,
+    requiereAdmin
+} = require("../intermediarios/autenticacionIntermediario");
+
+// Todas las rutas de admin requieren autenticación + rol administrador
+router.use(verificarAutenticacion, requiereAdmin);
+
 /**
  * Obtener todas las subastas pendientes.
  */

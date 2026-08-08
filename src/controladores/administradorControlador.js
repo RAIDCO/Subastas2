@@ -12,10 +12,12 @@ const obtenerSubastasPendientes = async (req, res) => {
             include: [
                 {
                     model: Usuario,
+                    as: "vendedor",
                     attributes: ["id", "nombre", "correo"]
                 },
                 {
                     model: Categoria,
+                    as: "categoria",
                     attributes: ["id", "nombre"]
                 }
             ],
@@ -53,6 +55,15 @@ const aprobarSubasta = async (req, res) => {
         }
 
         subasta.estado = "activa";
+
+        // Recalcular las fechas basándose en el momento de aprobación
+        const delayMinutos = subasta.inicio_delay_minutos || 0;
+        const duracionHoras = subasta.duracion_horas || 24;
+
+        const ahora = new Date();
+        subasta.fecha_inicio = new Date(ahora.getTime() + delayMinutos * 60 * 1000);
+        subasta.fecha_fin = new Date(subasta.fecha_inicio.getTime() + duracionHoras * 60 * 60 * 1000);
+
         await subasta.save();
 
         try {

@@ -96,6 +96,18 @@ const Subasta = sequelize.define(
         ganador_id: {
             type: DataTypes.UUID,
             allowNull: true
+        },
+
+        inicio_delay_minutos: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0
+        },
+
+        duracion_horas: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 24
         }
 
     },
