@@ -6,6 +6,7 @@ const autenticacionRutas = require("./rutas/autenticacionRutas");
 const administradorRutas = require("./rutas/administradorRutas");
 const usuarioRutas = require("./rutas/usuarioRutas");
 const subastaRutas = require("./rutas/subastaRutas");
+const categoriaRutas = require("./rutas/categoriaRutas");
 
 const app = express();
 
@@ -22,12 +23,12 @@ app.use(express.static(path.join(__dirname, "publico")));
 app.use("/api/autenticacion", autenticacionRutas);
 app.use("/api/administrador", administradorRutas);
 app.use("/api/subastas", subastaRutas);
+app.use("/api", categoriaRutas);
 app.use("/", usuarioRutas);
 app.use("/", vistasRutas);
 
 // Error 404
 app.use((req, res) => {
-    // Las peticiones a la API responden en JSON, no con una vista
     if (req.path.startsWith("/api")) {
         return res.status(404).json({
             exito: false,
