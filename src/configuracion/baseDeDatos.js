@@ -1,4 +1,13 @@
 const { Sequelize } = require("sequelize");
+const pg = require("pg");
+
+// Configurar parser para OID 1114 (TIMESTAMP WITHOUT TIME ZONE) en PostgreSQL
+// Supabase/Postgres almacena timestamps sin zona horaria en UTC.
+// Este parser evita que el driver 'pg' agregue el offset local del servidor al leer de la BD.
+pg.types.setTypeParser(1114, (str) => {
+    if (!str) return null;
+    return new Date(str.replace(" ", "T") + "Z");
+});
 
 // Obtiene la URL de conexión desde el archivo .env
 const dbUrl =

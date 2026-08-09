@@ -1,6 +1,6 @@
-// Gestor de eventos Socket.io para pujas y temporizador en tiempo real
 const { Subasta, Puja, Usuario } = require("../modelos");
 const { verificarToken } = require("../utilidades/tokenJwt");
+const { obtenerEstadoEfectivo } = require("../utilidades/fechas");
 const {
     iniciarTemporizador,
     reiniciarTemporizador,
@@ -53,23 +53,34 @@ const configurarSockets = (io) => {
 
                 socket.join(`subasta:${subastaId}`);
 
-                // Si la subasta está activa y no tiene temporizador corriendo, iniciar uno
-                if (subasta.estado === "activa") {
+                const estadoEfectivo = obtenerEstadoEfectivo(subasta);
+                const ahora = new Date();
+                const fechaInicio = new Date(subasta.fecha_inicio);
+
+                if (estadoEfectivo === "programada") {
+                    const segundosParaInicio = Math.max(0, Math.ceil((fechaInicio.getTime() - ahora.getTime()) / 1000));
+                    socket.emit("subasta:estado-actual", {
+                        subastaId,
+                        estado: "programada",
+                        precioActual: Number(subasta.precio_actual),
+                        segundosParaInicio,
+                        ganador: null
+                    });
+                } else if (subasta.estado === "activa") {
                     const tiempoRestante = obtenerTiempoRestante(subastaId);
 
                     if (tiempoRestante <= 0) {
                         iniciarTemporizador(subastaId, subasta.tiempo_inactividad_minutos, io);
                     }
-                }
 
-                // Enviar el estado actual al cliente que se acaba de unir
-                socket.emit("subasta:estado-actual", {
-                    subastaId,
-                    estado: subasta.estado,
-                    precioActual: Number(subasta.precio_actual),
-                    segundosRestantes: obtenerTiempoRestante(subastaId),
-                    ganador: subasta.ganador ? { id: subasta.ganador.id, nombre: subasta.ganador.nombre } : null
-                });
+                    socket.emit("subasta:estado-actual", {
+                        subastaId,
+                        estado: "activa",
+                        precioActual: Number(subasta.precio_actual),
+                        segundosRestantes: obtenerTiempoRestante(subastaId),
+                        ganador: subasta.ganador ? { id: subasta.ganador.id, nombre: subasta.ganador.nombre } : null
+                    });
+                }
 
                 // Enviar las últimas pujas al nuevo cliente
                 const ultimasPujas = await Puja.findAll({
@@ -122,8 +133,10 @@ const configurarSockets = (io) => {
                     return socket.emit("subasta:error", { mensaje: "Subasta no encontrada." });
                 }
 
-                if (subasta.estado !== "activa") {
-                    return socket.emit("subasta:error", { mensaje: "Esta subasta no está activa." });
+                const estadoEfectivo = obtenerEstadoEfectivo(subasta);
+
+                if (subasta.estado !== "activa" || estadoEfectivo === "programada") {
+                    return socket.emit("subasta:error", { mensaje: "Esta subasta aún no ha comenzado." });
                 }
 
                 // 4. No pujar en tu propia subasta

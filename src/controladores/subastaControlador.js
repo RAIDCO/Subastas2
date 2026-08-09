@@ -1,6 +1,6 @@
-// Controlador para la gestión de subastas (detalle, creación, listado)
 const { Subasta, Usuario, Categoria, Puja } = require("../modelos");
 const { capturarAsincrono, responderExito, responderError } = require("../utilidades/manejadorErrores");
+const { obtenerEstadoEfectivo } = require("../utilidades/fechas");
 
 //====================================
 // MOSTRAR DETALLE DE UNA SUBASTA
@@ -43,6 +43,8 @@ const mostrarDetalleSubasta = capturarAsincrono(async (req, res) => {
           }))
         : [];
 
+    const estadoEfectivo = obtenerEstadoEfectivo(subasta);
+
     return res.render("paginas/detalle-subasta", {
         titulo: `${subasta.titulo} - SubastasPro`,
         paginaActual: "subastas",
@@ -54,6 +56,7 @@ const mostrarDetalleSubasta = capturarAsincrono(async (req, res) => {
             precio_inicial: Number(subasta.precio_inicial),
             precio_actual: Number(subasta.precio_actual),
             estado: subasta.estado,
+            estadoEfectivo,
             tiempo_inactividad_minutos: subasta.tiempo_inactividad_minutos,
             fecha_inicio: subasta.fecha_inicio,
             fecha_fin: subasta.fecha_fin,

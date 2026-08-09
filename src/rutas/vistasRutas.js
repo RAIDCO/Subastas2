@@ -6,6 +6,7 @@ const { requiereSesionVista, cargarUsuarioSiExiste, requiereAdminVista } = requi
 const { limpiarCookieToken } = require('../utilidades/tokenJwt');
 const { obtenerHistorialUsuario } = require('../controladores/usuarioControlador');
 const { mostrarDetalleSubasta, mostrarFormularioCrear } = require('../controladores/subastaControlador');
+const { obtenerEstadoEfectivo } = require('../utilidades/fechas');
 
 // Ruta principal / Landing Page
 router.get('/', async (req, res) => {
@@ -33,8 +34,10 @@ router.get('/', async (req, res) => {
         precio_actual: Number(s.precio_actual),
         precio_inicial: Number(s.precio_inicial),
         estado: s.estado,
+        estadoEfectivo: obtenerEstadoEfectivo(s),
         categoria: s.categoria ? s.categoria.nombre : 'General',
         vendedor: s.vendedor ? s.vendedor.nombre : 'Vendedor',
+        fecha_inicio: s.fecha_inicio,
         fecha_fin: s.fecha_fin
       }));
 
@@ -72,8 +75,10 @@ router.get('/subastas', cargarUsuarioSiExiste, async (req, res) => {
       precio_inicial: Number(s.precio_inicial),
       precio_actual: Number(s.precio_actual),
       estado: s.estado,
+      estadoEfectivo: obtenerEstadoEfectivo(s),
       creador: s.vendedor,
       categoria: s.categoria,
+      fecha_inicio: s.fecha_inicio,
       fecha_fin: s.fecha_fin
     }));
 

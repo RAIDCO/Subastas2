@@ -94,17 +94,52 @@
     // Unirse a la sala de la subasta
     socket.emit("subasta:unirse", { subastaId });
 
+    const estadoEfectivoEl = document.getElementById("subasta-estado-efectivo");
+    const estadoEfectivo = estadoEfectivoEl ? estadoEfectivoEl.value : "";
+    const fechaInicioVal = document.getElementById("subasta-fecha-inicio") ? document.getElementById("subasta-fecha-inicio").value : null;
+
+    let timerProgramadaInterval = null;
+
+    const iniciarTimerProgramada = (segundosIniciales) => {
+        let segundos = segundosIniciales;
+        if (cronometroEl) cronometroEl.textContent = formatearTiempo(segundos);
+
+        if (timerProgramadaInterval) clearInterval(timerProgramadaInterval);
+
+        timerProgramadaInterval = setInterval(() => {
+            segundos--;
+            if (segundos <= 0) {
+                clearInterval(timerProgramadaInterval);
+                if (cronometroEl) cronometroEl.textContent = "00:00";
+                setTimeout(() => window.location.reload(), 1500);
+                return;
+            }
+            if (cronometroEl) cronometroEl.textContent = formatearTiempo(segundos);
+        }, 1000);
+    };
+
+    // Si la vista ya se cargó como programada, calcular cuenta regresiva local
+    if (estadoEfectivo === "programada" && fechaInicioVal) {
+        const segs = Math.max(0, Math.ceil((new Date(fechaInicioVal).getTime() - Date.now()) / 1000));
+        iniciarTimerProgramada(segs);
+    }
+
     //------------------------------------
     // ESTADO ACTUAL (al unirse)
     //------------------------------------
 
     socket.on("subasta:estado-actual", (datos) => {
         precioActual = datos.precioActual;
-        precioActualEl.textContent = formatearMonto(precioActual);
+        if (precioActualEl) precioActualEl.textContent = formatearMonto(precioActual);
         actualizarPujaMinima();
 
-        if (datos.segundosRestantes > 0) {
-            cronometroEl.textContent = formatearTiempo(datos.segundosRestantes);
+        if (datos.estado === "programada") {
+            if (datos.segundosParaInicio > 0) {
+                iniciarTimerProgramada(datos.segundosParaInicio);
+            }
+        } else if (datos.segundosRestantes > 0) {
+            if (timerProgramadaInterval) clearInterval(timerProgramadaInterval);
+            if (cronometroEl) cronometroEl.textContent = formatearTiempo(datos.segundosRestantes);
         }
     });
 
