@@ -1,4 +1,4 @@
-//- Formulario de registro de nuevo usuario
+//- Formulario de registro de nuevo usuario con verificación Gmail OTP en 2 pasos
 doctype html
 html(lang="es")
   head
@@ -12,7 +12,7 @@ html(lang="es")
     div(class="w-full max-w-md bg-slate-900/60 border border-slate-800 rounded-2xl shadow-xl p-8 backdrop-blur-xl")
 
       h1(class="text-3xl font-bold text-center text-white mb-2") Crear una Cuenta
-      p(class="text-center text-slate-400 mb-6") Regístrate gratis y empieza a pujar.
+      p(id="subtitulo-registro" class="text-center text-slate-400 mb-6") Regístrate gratis y empieza a pujar.
 
       //- Alerta de error
       div(id="alerta-error" class="hidden mb-6 bg-red-500/10 border border-red-500/30 text-red-400 text-sm p-4 rounded-xl flex items-center gap-2")
@@ -20,21 +20,28 @@ html(lang="es")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
         span(id="mensaje-error")
 
+      //- Alerta de información
+      div(id="alerta-info" class="hidden mb-6 bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm p-4 rounded-xl flex items-center gap-2")
+        svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+          path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
+        span(id="mensaje-info")
+
       //- Alerta de éxito
       div(id="alerta-exito" class="hidden mb-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm p-4 rounded-xl flex items-center gap-2")
         svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7")
         span ¡Cuenta creada correctamente! Redirigiendo al inicio de sesión...
 
-      form(id="form-registro" class="space-y-5")
+      //- Formulario Paso 1: Datos de Registro
+      form(id="form-paso-1" class="space-y-5")
 
         div
           label(class="block text-slate-300 mb-2 text-sm font-medium") Nombre completo
           input(type="text" id="nombre" name="nombre" placeholder="María González" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
 
         div
-          label(class="block text-slate-300 mb-2 text-sm font-medium") Correo electrónico
-          input(type="email" id="correo" name="correo" placeholder="tu@correo.com" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          label(class="block text-slate-300 mb-2 text-sm font-medium") Correo electrónico (Gmail)
+          input(type="email" id="correo" name="correo" placeholder="tu@gmail.com" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
 
         div
           label(class="block text-slate-300 mb-2 text-sm font-medium") Contraseña
@@ -48,64 +55,210 @@ html(lang="es")
           input(type="checkbox" required class="rounded border-slate-700 bg-slate-800 text-emerald-500")
           | Acepto los términos y condiciones
 
-        button(type="submit" id="btn-submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
-          | Crear Cuenta
+        button(type="submit" id="btn-solicitar-codigo" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
+          | Enviar Código a mi Gmail
+
+      //- Formulario Paso 2: Verificación de Código OTP (Oculto inicialmente)
+      form(id="form-paso-2" class="hidden space-y-5")
+
+        div(class="text-center")
+          label(class="block text-slate-300 mb-2 text-sm font-medium") Código de verificación (6 dígitos)
+          input(type="text" id="codigo" name="codigo" placeholder="123456" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-4 text-center font-mono text-2xl tracking-[0.4em] text-emerald-400 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-colors")
+
+        button(type="submit" id="btn-verificar" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
+          | Verificar y Crear Cuenta
+
+        div(class="flex items-center justify-between text-xs text-slate-400 pt-2")
+          button(type="button" id="btn-volver" class="hover:text-slate-200 transition-colors")
+            | ← Modificar correo
+          button(type="button" id="btn-reenviar" disabled class="disabled:opacity-50 hover:text-emerald-400 transition-colors text-emerald-500 font-medium")
+            | Reenviar código (<span id="contador-reenvio">60</span>s)
 
       p(class="text-center text-slate-400 text-sm mt-6")
         | ¿Ya tienes cuenta?
-        a(href="/login" class="text-emerald-400 ml-1 hover:underline font-medium") Inicia sesión
+        a(href="/iniciar-sesion" class="text-emerald-400 ml-1 hover:underline font-medium") Inicia sesión
 
     script.
-      const form = document.getElementById('form-registro');
+      const formPaso1 = document.getElementById('form-paso-1');
+      const formPaso2 = document.getElementById('form-paso-2');
+      const subtitulo = document.getElementById('subtitulo-registro');
       const alertaError = document.getElementById('alerta-error');
       const mensajeError = document.getElementById('mensaje-error');
+      const alertaInfo = document.getElementById('alerta-info');
+      const mensajeInfo = document.getElementById('mensaje-info');
       const alertaExito = document.getElementById('alerta-exito');
-      const btnSubmit = document.getElementById('btn-submit');
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+      const btnSolicitarCodigo = document.getElementById('btn-solicitar-codigo');
+      const btnVerificar = document.getElementById('btn-verificar');
+      const btnVolver = document.getElementById('btn-volver');
+      const btnReenviar = document.getElementById('btn-reenviar');
+      const contadorReenvioSpan = document.getElementById('contador-reenvio');
+
+      let contadorSegundos = 60;
+      let intervaloContador = null;
+
+      function ocultarAlertas() {
         alertaError.classList.add('hidden');
+        alertaInfo.classList.add('hidden');
         alertaExito.classList.add('hidden');
+      }
 
-        const nombre = document.getElementById('nombre').value;
-        const correo = document.getElementById('correo').value;
+      function mostrarError(msg) {
+        ocultarAlertas();
+        mensajeError.textContent = msg;
+        alertaError.classList.remove('hidden');
+      }
+
+      function mostrarInfo(msg) {
+        ocultarAlertas();
+        mensajeInfo.textContent = msg;
+        alertaInfo.classList.remove('hidden');
+      }
+
+      function iniciarContadorReenvio() {
+        contadorSegundos = 60;
+        btnReenviar.disabled = true;
+        contadorReenvioSpan.textContent = contadorSegundos;
+        if (intervaloContador) clearInterval(intervaloContador);
+
+        intervaloContador = setInterval(() => {
+          contadorSegundos--;
+          contadorReenvioSpan.textContent = contadorSegundos;
+          if (contadorSegundos <= 0) {
+            clearInterval(intervaloContador);
+            btnReenviar.disabled = false;
+            btnReenviar.innerHTML = 'Reenviar código';
+          }
+        }, 1000);
+      }
+
+      // Paso 1: Solicitar código de verificación
+      formPaso1.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        ocultarAlertas();
+
+        const nombre = document.getElementById('nombre').value.trim();
+        const correo = document.getElementById('correo').value.trim().toLowerCase();
         const clave = document.getElementById('clave').value;
         const confirmarClave = document.getElementById('confirmarClave').value;
 
-        if (clave !== confirmarClave) {
-          mensajeError.textContent = 'Las contraseñas no coinciden.';
-          alertaError.classList.remove('hidden');
+        if (!correo.endsWith('@gmail.com') && !correo.endsWith('@googlemail.com')) {
+          mostrarError('Debes registrarte con un correo de Gmail (@gmail.com).');
           return;
         }
 
-        btnSubmit.disabled = true;
-        btnSubmit.textContent = 'Creando cuenta...';
+        if (clave !== confirmarClave) {
+          mostrarError('Las contraseñas no coinciden.');
+          return;
+        }
+
+        btnSolicitarCodigo.disabled = true;
+        btnSolicitarCodigo.textContent = 'Enviando código...';
 
         try {
-          const respuesta = await fetch('/api/autenticacion/registro', {
+          const respuesta = await fetch('/api/autenticacion/solicitar-codigo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre, correo, clave })
+            body: JSON.stringify({ correo })
           });
 
           const datos = await respuesta.json();
 
           if (datos.exito) {
-            alertaExito.classList.remove('hidden');
-            form.reset();
-            setTimeout(() => {
-              window.location.href = '/login';
-            }, 1500);
+            formPaso1.classList.add('hidden');
+            formPaso2.classList.remove('hidden');
+            subtitulo.textContent = 'Verifica tu dirección de correo Gmail.';
+            mostrarInfo(`Ingresa el código de 6 dígitos que enviamos a ${correo}.`);
+            iniciarContadorReenvio();
+            document.getElementById('codigo').focus();
           } else {
-            mensajeError.textContent = datos.mensaje || 'Error al crear la cuenta.';
-            alertaError.classList.remove('hidden');
-            btnSubmit.disabled = false;
-            btnSubmit.textContent = 'Crear Cuenta';
+            mostrarError(datos.mensaje || 'Error al solicitar el código.');
           }
         } catch (err) {
-          mensajeError.textContent = 'Error de conexión con el servidor.';
-          alertaError.classList.remove('hidden');
-          btnSubmit.disabled = false;
-          btnSubmit.textContent = 'Crear Cuenta';
+          mostrarError('Error de conexión con el servidor.');
+        } finally {
+          btnSolicitarCodigo.disabled = false;
+          btnSolicitarCodigo.textContent = 'Enviar Código a mi Gmail';
+        }
+      });
+
+      // Botón volver al Paso 1
+      btnVolver.addEventListener('click', () => {
+        ocultarAlertas();
+        formPaso2.classList.add('hidden');
+        formPaso1.classList.remove('hidden');
+        subtitulo.textContent = 'Regístrate gratis y empieza a pujar.';
+      });
+
+      // Reenviar código
+      btnReenviar.addEventListener('click', async () => {
+        const correo = document.getElementById('correo').value.trim().toLowerCase();
+        btnReenviar.disabled = true;
+
+        try {
+          const respuesta = await fetch('/api/autenticacion/solicitar-codigo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo })
+          });
+
+          const datos = await respuesta.json();
+
+          if (datos.exito) {
+            mostrarInfo(`Nuevo código enviado a ${correo}.`);
+            iniciarContadorReenvio();
+          } else {
+            mostrarError(datos.mensaje || 'Error al reenviar el código.');
+            btnReenviar.disabled = false;
+          }
+        } catch (err) {
+          mostrarError('Error de conexión con el servidor.');
+          btnReenviar.disabled = false;
+        }
+      });
+
+      // Paso 2: Enviar código y registrar cuenta
+      formPaso2.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        ocultarAlertas();
+
+        const nombre = document.getElementById('nombre').value.trim();
+        const correo = document.getElementById('correo').value.trim().toLowerCase();
+        const clave = document.getElementById('clave').value;
+        const codigo = document.getElementById('codigo').value.trim();
+
+        if (codigo.length !== 6) {
+          mostrarError('El código debe tener exactamente 6 dígitos.');
+          return;
+        }
+
+        btnVerificar.disabled = true;
+        btnVerificar.textContent = 'Verificando y creando cuenta...';
+
+        try {
+          const respuesta = await fetch('/api/autenticacion/registro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, correo, clave, codigo })
+          });
+
+          const datos = await respuesta.json();
+
+          if (datos.exito) {
+            ocultarAlertas();
+            alertaExito.classList.remove('hidden');
+            formPaso2.reset();
+            setTimeout(() => {
+              window.location.href = '/iniciar-sesion';
+            }, 1500);
+          } else {
+            mostrarError(datos.mensaje || 'Error al verificar la cuenta.');
+            btnVerificar.disabled = false;
+            btnVerificar.textContent = 'Verificar y Crear Cuenta';
+          }
+        } catch (err) {
+          mostrarError('Error de conexión con el servidor.');
+          btnVerificar.disabled = false;
+          btnVerificar.textContent = 'Verificar y Crear Cuenta';
         }
       });

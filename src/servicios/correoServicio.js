@@ -1,0 +1,121 @@
+const nodemailer = require("nodemailer");
+
+// Configuración del transportador Nodemailer
+const crearTransportador = () => {
+    const usuario = process.env.CORREO_USUARIO;
+    const clave = process.env.CORREO_CLAVE;
+
+    if (!usuario || !clave) {
+        return null;
+    }
+
+    return nodemailer.createTransport({
+        service: process.env.CORREO_SERVICIO || "gmail",
+        host: process.env.CORREO_HOST || "smtp.gmail.com",
+        port: parseInt(process.env.CORREO_PUERTO || "465", 10),
+        secure: true,
+        auth: {
+            user: usuario,
+            pass: clave
+        }
+    });
+};
+
+/**
+ * Envía un código OTP de 6 dígitos al correo especificado.
+ * @param {string} correoDestino - Correo Gmail del usuario.
+ * @param {string} codigo - Código de 6 dígitos.
+ */
+const enviarCodigoVerificacion = async (correoDestino, codigo) => {
+    const transportador = crearTransportador();
+
+    // Fallback de desarrollo si aún no se han configurado credenciales en el .env
+    if (!transportador) {
+        console.log("\n==========================================");
+        console.log("⚠️ [MODO DESARROLLO - CORREO NO CONFIGURADO]");
+        console.log(`✉️ Código de verificación para ${correoDestino}: [ ${codigo} ]`);
+        console.log("Configura CORREO_USUARIO y CORREO_CLAVE en tu .env para envío real.");
+        console.log("==========================================\n");
+        return true;
+    }
+
+    const remitente = process.env.CORREO_REMITENTE || `"SubastasPro" <${process.env.CORREO_USUARIO}>`;
+
+    const plantillaHtml = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Código de Verificación - SubastasPro</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #090d16; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #f8fafc;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #090d16; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" max-width="500" cellspacing="0" cellpadding="0" style="background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 32px; max-width: 500px;">
+              <!-- Header -->
+              <tr>
+                <td align="center" style="padding-bottom: 24px;">
+                  <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: #10b981; letter-spacing: -0.5px;">
+                    🔨 SubastasPro
+                  </h1>
+                </td>
+              </tr>
+              <!-- Content -->
+              <tr>
+                <td style="text-align: center; padding-bottom: 24px;">
+                  <h2 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 700; color: #ffffff;">
+                    Verifica tu dirección de correo
+                  </h2>
+                  <p style="margin: 0; font-size: 14px; color: #94a3b8; line-height: 1.5;">
+                    Gracias por registrarte en SubastasPro. Usa el siguiente código de verificación para completar la creación de tu cuenta:
+                  </p>
+                </td>
+              </tr>
+              <!-- OTP Box -->
+              <tr>
+                <td align="center" style="padding-bottom: 24px;">
+                  <div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 18px 24px; display: inline-block; letter-spacing: 10px; font-size: 32px; font-weight: 800; color: #10b981; text-align: center;">
+                    ${codigo}
+                  </div>
+                </td>
+              </tr>
+              <!-- Notice -->
+              <tr>
+                <td style="text-align: center; padding-bottom: 12px;">
+                  <p style="margin: 0; font-size: 13px; color: #64748b;">
+                    Este código expira en <strong>10 minutos</strong>. No compartas este código con nadie.
+                  </p>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="border-top: 1px solid #1e293b; padding-top: 20px; text-align: center;">
+                  <p style="margin: 0; font-size: 12px; color: #475569;">
+                    Si no solicitaste este código, puedes ignorar este mensaje.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    `;
+
+    const info = await transportador.sendMail({
+        from: remitente,
+        to: correoDestino,
+        subject: `${codigo} es tu código de verificación de SubastasPro`,
+        html: plantillaHtml
+    });
+
+    console.log(`✉️ Correo de verificación enviado con éxito a ${correoDestino} (ID: ${info.messageId})`);
+    return true;
+};
+
+module.exports = {
+    enviarCodigoVerificacion
+};

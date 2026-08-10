@@ -1,145 +1,145 @@
 extends ../disenos/autenticado.pug
 
 block contenido
+  //- Helper para construir URLs conservando filtros existentes
+  -
+    const construirUrlFiltro = (paramsNuevos) => {
+      const actual = {
+        buscar: buscar || '',
+        categoria: categoriaSel || 'Todas',
+        estado: estadoSel || 'activa',
+        orden: ordenSel || 'recientes',
+        ...paramsNuevos
+      };
+      const query = new URLSearchParams();
+      if (actual.buscar) query.set('buscar', actual.buscar);
+      if (actual.categoria && actual.categoria !== 'Todas') query.set('categoria', actual.categoria);
+      if (actual.estado && actual.estado !== 'activa') query.set('estado', actual.estado);
+      if (actual.orden && actual.orden !== 'recientes') query.set('orden', actual.orden);
+      const queryString = query.toString();
+      return `/subastas${queryString ? '?' + queryString : ''}`;
+    };
+
   //- Encabezado de la página
-  div(class="mb-8")
-    h1(class="text-2xl font-bold text-white") Subastas activas
-    p(class="text-slate-400 mt-1") Explora, filtra y puja en tiempo real por artículos únicos.
+  div(class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4")
+    div
+      h1(class="text-2xl font-bold text-white") Subastas Activas y Catálogo
+      p(class="text-slate-400 mt-1") Explora, filtra y puja en tiempo real por artículos únicos.
 
-  //- Filtros por categoría (pills)
-  div(class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 mb-6")
-    div(class="flex flex-wrap gap-2 mb-4")
-      - const categorias = ['Todas', 'Tecnología', 'Coleccionables', 'Arte', 'Vehículos', 'Instrumentos']
-      each cat in categorias
-        button(class=`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${cat === 'Todas' ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700'}`)= cat
+    if buscar
+      div(class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-xl text-sm")
+        span Resultados para: "#{buscar}"
+        a(href=construirUrlFiltro({ buscar: '' }) class="hover:text-white font-bold ml-2") ✕
 
-    //- Filtros de estado y ordenar
-    div(class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4")
-      //- Filtros de estado
-      div(class="flex items-center gap-1 text-sm")
+  //- Panel de Filtros por Categoría, Estado y Orden
+  div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 mb-6 backdrop-blur-xl space-y-4")
+
+    //- 1. Filtro por Categorías (pills)
+    div(class="flex flex-wrap items-center gap-2")
+      span(class="text-slate-400 text-xs font-semibold uppercase tracking-wider mr-2") Categoría:
+      - const listaCategorias = ['Todas', 'Tecnología', 'Coleccionables', 'Arte', 'Vehículos', 'Instrumentos']
+      each cat in listaCategorias
+        a(
+          href=construirUrlFiltro({ categoria: cat })
+          class=`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${ (categoriaSel || 'Todas') === cat ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/60' }`
+        )= cat
+
+    //- 2. Filtro por Estado y Ordenación
+    form(id="form-filtros" action="/subastas" method="GET" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-3 border-t border-slate-800/80")
+
+      //- Mantenemos buscar y categoria en inputs hidden para no perderlos al usar los selects
+      if buscar
+        input(type="hidden" name="buscar" value=buscar)
+      if categoriaSel && categoriaSel !== 'Todas'
+        input(type="hidden" name="categoria" value=categoriaSel)
+
+      //- Filtros de estado (En vivo / Pendientes / Finalizadas / Todas)
+      div(class="flex flex-wrap items-center gap-1.5 text-xs font-medium")
         span(class="text-slate-500 mr-2") Estado:
-        - const estados = ['Todas', 'En vivo ahora', 'Próximamente', 'Finalizadas']
-        each estado in estados
-          button(class=`px-3 py-1 rounded-md font-medium transition-colors ${estado === 'Todas' ? 'text-white bg-slate-800' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`)= estado
+        -
+          const estados = [
+            { clave: 'activa', label: '⚡ En vivo ahora' },
+            { clave: 'pendiente', label: '⏳ Pendientes' },
+            { clave: 'finalizada', label: '🏁 Finalizadas' },
+            { clave: 'todas', label: '🌐 Todas' }
+          ]
+        each est in estados
+          a(
+            href=construirUrlFiltro({ estado: est.clave })
+            class=`px-3 py-1.5 rounded-lg transition-colors ${ (estadoSel || 'activa') === est.clave ? 'bg-slate-800 text-white font-bold border border-slate-700' : 'text-slate-400 hover:text-white hover:bg-slate-800/60' }`
+          )= est.label
 
-      //- Ordenar por
-      div(class="flex items-center gap-2 text-sm")
-        span(class="text-slate-500") Ordenar por:
-        select(class="bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500")
-          option Tiempo por finalizar
-          option Menor precio
-          option Mayor precio
-          option Más recientes
+      //- Selector de orden
+      div(class="flex items-center gap-2 text-xs text-slate-400")
+        label(for="orden" class="whitespace-nowrap") Ordenar por:
+        select(
+          id="orden"
+          name="orden"
+          onchange="this.form.submit()"
+          class="bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+        )
+          option(value="recientes" selected=(ordenSel === 'recientes')) Más recientes
+          option(value="menor-precio" selected=(ordenSel === 'menor-precio')) Menor precio
+          option(value="mayor-precio" selected=(ordenSel === 'mayor-precio')) Mayor precio
+          option(value="tiempo" selected=(ordenSel === 'tiempo')) Tiempo por finalizar
 
   //- Grid de subastas
   if subastas && subastas.length > 0
-    //- Grid con subastas reales (se llenará automáticamente cuando la BD esté conectada)
     div(class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6")
       each subasta in subastas
         a(href=`/subastas/${subasta.id}` class="block group")
-          article(class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition-all duration-300 flex flex-col")
+          article(class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition-all duration-300 flex flex-col h-full shadow-lg backdrop-blur-xl")
+
             //- Imagen del artículo
             div(class="relative h-56 overflow-hidden bg-slate-950")
               if subasta.imagen_url
                 img(src=subasta.imagen_url alt=subasta.titulo class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500")
               else
-                div(class="w-full h-full flex items-center justify-center text-slate-600")
+                div(class="w-full h-full flex items-center justify-center text-slate-700")
                   svg(class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24")
-                    path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z")
+                    path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z")
 
               //- Badge de categoría
-              div(class="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-slate-300 border border-slate-700")= subasta.categoria ? subasta.categoria.nombre : 'General'
+              div(class="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-slate-300 border border-slate-700")
+                = subasta.categoria ? subasta.categoria.nombre : 'General'
 
               //- Badge de estado
-              if subasta.estadoEfectivo === 'programada'
-                div(class="absolute top-3 right-3 bg-purple-500/90 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5")
-                  span(class="w-1.5 h-1.5 rounded-full bg-white animate-pulse")
-                  span PRÓXIMAMENTE
-              else if subasta.estadoEfectivo === 'activa'
-                div(class="absolute top-3 right-3 bg-red-500/90 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5")
+              if subasta.estado === 'activa'
+                div(class="absolute top-3 right-3 bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-md")
                   span(class="w-1.5 h-1.5 rounded-full bg-white animate-pulse")
                   span EN VIVO
+              else if subasta.estado === 'pendiente'
+                div(class="absolute top-3 right-3 bg-amber-500/90 text-slate-950 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5")
+                  span ⏳ PENDIENTE
               else if subasta.estado === 'finalizada'
-                div(class="absolute top-3 right-3 bg-slate-700/90 text-slate-300 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5")
-                  span • FINALIZADA
+                div(class="absolute top-3 right-3 bg-slate-800 text-slate-400 px-3 py-1 rounded-full text-xs font-bold border border-slate-700")
+                  span 🏁 FINALIZADA
 
             //- Info de la subasta
             div(class="p-5 flex flex-col flex-grow")
               h3(class="text-base font-bold text-white mb-1 group-hover:text-emerald-400 transition-colors line-clamp-1")= subasta.titulo
-              p(class="text-slate-500 text-xs mb-4")= subasta.creador ? `por ${subasta.creador.nombre}` : 'por Vendedor'
+              p(class="text-slate-500 text-xs mb-4")= subasta.creador ? `Publicado por ${subasta.creador.nombre}` : 'Por Vendedor'
 
               //- Precio y tiempo
-              div(class="mt-auto flex items-center justify-between pt-4 border-t border-slate-800/60")
+              div(class="mt-auto flex items-center justify-between pt-4 border-t border-slate-800/80")
                 div
-                  if subasta.estado === 'finalizada'
-                    div(class="flex items-center gap-2 text-slate-400")
-                      svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
-                        path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z")
-                      span(class="text-sm font-medium") Finalizada
-                  else
-                    div
-                      span(class="text-xs text-slate-500 block")= subasta.estadoEfectivo === 'programada' ? 'Precio inicial' : 'Puja actual'
-                      span(class="text-lg font-extrabold text-emerald-400") $#{subasta.precio_actual || subasta.precio_inicial}
+                  span(class="text-xs text-slate-500 block")= subasta.estado === 'finalizada' ? 'Precio final' : 'Puja actual'
+                  span(class="text-lg font-extrabold text-emerald-400") $#{Number(subasta.precio_actual || subasta.precio_inicial).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
 
-                if subasta.estadoEfectivo === 'programada'
+                if subasta.estado === 'activa'
                   div(class="text-right")
-                    span(class="text-xs text-slate-500 block") Inicia en
-                    span(class="cuenta-regresiva text-lg font-bold text-purple-400 font-mono" data-fecha-inicio=subasta.fecha_inicio) --:--
-                else if subasta.estadoEfectivo === 'activa'
-                  div(class="text-right")
-                    span(class="text-xs text-slate-500 block") Cierra en
-                    span(class="cuenta-regresiva text-lg font-bold text-red-400 font-mono" data-fecha-fin=subasta.fecha_fin) --:--
+                    span(class="text-xs text-slate-500 block") Inactividad
+                    span(class="text-xs font-medium text-slate-400") #{subasta.tiempo_inactividad_minutos} min
 
   else
-    //- Estado vacío: no hay subastas (skeleton/placeholder)
-    div(class="text-center py-20")
-      div(class="mx-auto w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-6")
+    //- Estado vacío cuando no hay resultados para la búsqueda/filtro
+    div(class="bg-slate-900/60 border border-slate-800 rounded-2xl text-center py-20 px-6 max-w-lg mx-auto my-8")
+      div(class="mx-auto w-20 h-20 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center mb-6")
         svg(class="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24")
-          path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10")
-      h3(class="text-xl font-bold text-slate-300 mb-2") No hay subastas activas en este momento
-      p(class="text-slate-500 max-w-md mx-auto mb-6") Las subastas publicadas aparecerán aquí una vez que sean aprobadas por un administrador. ¡Sé el primero en publicar!
-      a(href="/crear-subasta" class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors")
-        svg(class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24")
-          path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4")
-        span Publicar una Subasta
+          path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z")
 
-block scripts
-  script.
-    function actualizarCuentasRegresivas() {
-      const elementos = document.querySelectorAll('.cuenta-regresiva');
-      const ahora = new Date().getTime();
-
-      elementos.forEach((el) => {
-        const fechaInicioAttr = el.getAttribute('data-fecha-inicio');
-        const fechaFinAttr = el.getAttribute('data-fecha-fin');
-        const fechaDestino = fechaInicioAttr ? new Date(fechaInicioAttr).getTime() : (fechaFinAttr ? new Date(fechaFinAttr).getTime() : null);
-
-        if (!fechaDestino) return;
-
-        const diferencia = fechaDestino - ahora;
-
-        if (diferencia <= 0) {
-          if (fechaInicioAttr) {
-            el.textContent = 'En inicio...';
-            // Recargar para actualizar vista a activa cuando inicia
-            setTimeout(() => window.location.reload(), 2000);
-          } else {
-            el.textContent = '00:00:00';
-          }
-          return;
-        }
-
-        const horas = Math.floor(diferencia / (1000 * 60 * 60));
-        const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
-        const segundos = Math.floor((diferencia % (1000 * 60)) / 1000);
-
-        const h = String(horas).padStart(2, '0');
-        const m = String(minutos).padStart(2, '0');
-        const s = String(segundos).padStart(2, '0');
-
-        el.textContent = horas > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
-      });
-    }
-
-    actualizarCuentasRegresivas();
-    setInterval(actualizarCuentasRegresivas, 1000);
+      h3(class="text-xl font-bold text-slate-300 mb-2") No se encontraron subastas
+      p(class="text-slate-500 text-sm mb-6") Intenta ajustar los filtros de búsqueda o categoría para encontrar más artículos.
+      div(class="flex justify-center gap-3")
+        a(href="/subastas" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-5 py-2.5 rounded-xl border border-slate-700 transition-colors") Limpiar filtros
+        a(href="/crear-subasta" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-emerald-500/20") + Publicar Subasta

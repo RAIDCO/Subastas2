@@ -6,6 +6,7 @@ const Subasta = require("./subastaModelo");
 const Puja = require("./pujaModelo");
 const HistorialSubasta = require("./historialSubastaModelo");
 const Auditoria = require("./auditoriaModelo");
+const CodigoVerificacion = require("./codigoVerificacionModelo");
 
 //====================================
 // RELACIÓN USUARIO - SUBASTA
@@ -93,5 +94,6 @@ module.exports = {
     Subasta,
     Puja,
     HistorialSubasta,
-    Auditoria
+    Auditoria,
+    CodigoVerificacion
 };

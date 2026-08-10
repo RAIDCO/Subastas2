@@ -1,7 +1,8 @@
-// Rutas de API para registro e inicio de sesión
+// Rutas de API para registro, inicio y cierre de sesión
 const express = require("express");
 
 const {
+    solicitarCodigoRegistro,
     registrarUsuario,
     iniciarSesion,
     cerrarSesion,
@@ -18,14 +19,18 @@ const router = express.Router();
 // RUTAS PÚBLICAS
 //====================================
 
+// POST /api/autenticacion/solicitar-codigo
+router.post("/solicitar-codigo", solicitarCodigoRegistro);
+
 // POST /api/autenticacion/registro
 router.post("/registro", registrarUsuario);
 
 // POST /api/autenticacion/login
 router.post("/login", iniciarSesion);
 
-// POST /api/autenticacion/logout
+// POST y GET /api/autenticacion/logout (cerrar sesión)
 router.post("/logout", cerrarSesion);
+router.get("/logout", cerrarSesion);
 
 //====================================
 // RUTAS PROTEGIDAS

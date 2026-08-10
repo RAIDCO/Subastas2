@@ -45,6 +45,8 @@ const testConnection = async () => {
     try {
         await sequelize.authenticate();
         console.log("✅ Conexión a Supabase establecida correctamente.");
+        await sequelize.sync();
+        console.log("✅ Tablas de la base de datos sincronizadas.");
     } catch (error) {
         console.error("❌ Error al conectar con la base de datos.");
         console.error(error.message);

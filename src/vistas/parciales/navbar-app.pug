@@ -10,28 +10,37 @@ header(class="h-16 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 fl
         path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16")
 
     //- Barra de búsqueda
-    div(class="hidden sm:flex items-center gap-2 bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2 w-full max-w-md focus-within:border-emerald-500/50 transition-colors")
+    form(action="/subastas" method="GET" class="hidden sm:flex items-center gap-2 bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2 w-full max-w-md focus-within:border-emerald-500/50 transition-colors")
       svg(class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
         path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z")
-      input(type="text" placeholder="Buscar subastas en tiempo real..." class="bg-transparent border-none outline-none text-sm text-slate-200 placeholder-slate-500 w-full")
+      input(type="text" name="buscar" value=busquedaActual || '' placeholder="Buscar subastas por título o palabras clave..." class="bg-transparent border-none outline-none text-sm text-slate-200 placeholder-slate-500 w-full")
 
   //- Lado derecho: Publicar Subasta + Perfil + Cerrar sesión
   div(class="flex items-center gap-3")
 
     //- Botón Publicar Subasta
-    a(href="/crear-subasta" class="hidden md:flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors")
+    a(href="/crear-subasta" class="hidden md:flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
       svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
         path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4")
       span + Publicar Subasta
 
     //- Perfil del usuario
-    div(class="flex items-center gap-2 text-sm")
+    a(href="/perfil" class="flex items-center gap-2 text-sm hover:opacity-80 transition-opacity")
       div(class="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center")
         svg(class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z")
       span(class="hidden md:inline text-slate-200 font-medium")= usuario ? usuario.nombre : 'Usuario'
 
     //- Botón cerrar sesión
-    a(href="/cerrar-sesion" class="text-slate-400 hover:text-red-400 transition-colors" title="Cerrar sesión")
+    a(href="/cerrar-sesion" id="btn-cerrar-sesion" class="text-slate-400 hover:text-red-400 transition-colors p-1" title="Cerrar sesión")
       svg(class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24")
         path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1")
+
+script.
+  const btnLogout = document.getElementById('btn-cerrar-sesion');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+    });
+  }

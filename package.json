@@ -25,6 +25,7 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.2.0",
+    "nodemailer": "^9.0.5",
     "pg": "^8.11.5",
     "pg-hstore": "^2.3.4",
     "pug": "^3.0.2",
