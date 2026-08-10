@@ -5,10 +5,10 @@ html(lang="es")
     meta(name="viewport" content="width=device-width, initial-scale=1.0")
     title= titulo || 'SubastasPro'
 
-    //- Google Fonts: Plus Jakarta Sans
+    //- Google Fonts: Inter
     link(rel="preconnect" href="https://fonts.googleapis.com")
     link(rel="preconnect" href="https://fonts.gstatic.com" crossorigin)
-    link(href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet")
+    link(href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet")
 
     //- Tailwind CSS CDN
     script(src="https://cdn.tailwindcss.com")
@@ -17,12 +17,137 @@ html(lang="es")
         theme: {
           extend: {
             fontFamily: {
-              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            }
+              sans: ['"Inter"', 'system-ui', 'sans-serif'],
+            },
+            colors: {
+              base: {
+                bg: '#F7F4EF',
+                surface: '#FFFFFF',
+                muted: '#EFECE6',
+                border: '#E2DDD5',
+                'border-subtle': '#EBE5DC',
+              },
+              ink: {
+                DEFAULT: '#1A1614',
+                body: '#3D3530',
+                muted: '#8A7F76',
+                faint: '#ADA69E',
+              },
+              accent: {
+                DEFAULT: '#D97706',
+                hover: '#B45309',
+                light: '#FFFBEB',
+                border: '#FDE68A',
+                50: '#FFFBEB',
+                100: '#FEF3C7',
+                500: '#F59E0B',
+                600: '#D97706',
+                700: '#B45309',
+              },
+              secondary: {
+                DEFAULT: '#C2410C',
+                hover: '#9A3412',
+                light: '#FFF7ED',
+                border: '#FFEDD5',
+                50: '#FFF7ED',
+                100: '#FFEDD5',
+                600: '#C2410C',
+                700: '#9A3412',
+              },
+              live: {
+                DEFAULT: '#059669',
+                light: '#ECFDF5',
+                border: '#A7F3D0',
+                text: '#065F46',
+              },
+              warn: {
+                DEFAULT: '#D97706',
+                light: '#FFFBEB',
+                border: '#FDE68A',
+                text: '#92400E',
+              },
+              danger: {
+                DEFAULT: '#DC2626',
+                light: '#FEF2F2',
+                border: '#FECACA',
+                text: '#991B1B',
+              },
+            },
+            boxShadow: {
+              'card': '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)',
+              'card-hover': '0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04)',
+              'btn': '0 1px 3px rgba(217,119,6,0.2)',
+            },
+            borderRadius: {
+              'card': '16px',
+              'btn': '10px',
+              'input': '10px',
+            },
+            animation: {
+              'fade-slide-up': 'fadeSlideUp 0.5s ease-out both',
+              'pulse-live': 'pulseLive 2s ease-in-out infinite',
+            },
+            keyframes: {
+              fadeSlideUp: {
+                '0%': { opacity: '0', transform: 'translateY(16px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              pulseLive: {
+                '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+                '50%': { opacity: '0.6', transform: 'scale(1.05)' },
+              },
+            },
           }
         }
       }
 
-  body(class="font-sans bg-slate-950 text-slate-100 min-h-screen antialiased")
+    //- Custom styles & animations
+    style.
+      @keyframes fadeSlideUp {
+        0% { opacity: 0; transform: translateY(16px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes pulseLive {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.05); }
+      }
+      @keyframes pulseDot {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+      }
+      .anim-fade-up {
+        animation: fadeSlideUp 0.5s ease-out both;
+      }
+      .anim-fade-up-1 { animation-delay: 0.05s; }
+      .anim-fade-up-2 { animation-delay: 0.1s; }
+      .anim-fade-up-3 { animation-delay: 0.15s; }
+      .anim-fade-up-4 { animation-delay: 0.2s; }
+      .anim-fade-up-5 { animation-delay: 0.25s; }
+      .anim-fade-up-6 { animation-delay: 0.3s; }
+      .badge-live {
+        animation: pulseLive 2s ease-in-out infinite;
+      }
+      .dot-live {
+        animation: pulseDot 1.5s ease-in-out infinite;
+      }
+      .card-interactive {
+        transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+      }
+      .card-interactive:hover {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+        transform: translateY(-2px);
+        border-color: #FDE68A;
+      }
+      /* Smooth number transitions for countdown */
+      .timer-digit {
+        transition: all 0.3s ease;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #EFECE6; }
+      ::-webkit-scrollbar-thumb { background: #D2CBC2; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: #ADA69E; }
+
+  body(class="font-sans bg-[#F7F4EF] text-[#3D3530] min-h-screen antialiased")
     block contenido
     block scripts

@@ -12,39 +12,39 @@ block contenido
       return new Date(valor).toLocaleString('es-MX', { timeZone: 'America/Mexico_City', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
     const estilosEstado = {
-      ganada: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-      perdida: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-      en_curso: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-      cancelada: 'bg-slate-800 text-slate-400 border-slate-700'
+      ganada: 'bg-[#ECFDF5] text-[#065F46] border-[#A7F3D0]',
+      perdida: 'bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]',
+      en_curso: 'bg-[#FFFBEB] text-[#92400E] border-[#FDE68A]',
+      cancelada: 'bg-[#EFECE6] text-[#8A7F76] border-[#E2DDD5]'
     };
 
   //- Encabezado de la página
-  div(class="mb-8")
-    h1(class="text-2xl font-bold text-white") Mi historial
-    p(class="text-slate-400 mt-1") Todas las subastas en las que has pujado, y las que has ganado.
+  div(class="mb-8 anim-fade-up")
+    h1(class="text-2xl font-bold text-[#1A1614]") Mi historial
+    p(class="text-[#8A7F76] mt-1 text-sm") Todas las subastas en las que has pujado, y las que has ganado.
 
   //- Tarjetas de resumen
   div(class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6")
-    - const tarjetas = [{ etiqueta: 'Participaciones', valor: resumen.todas, color: 'text-white' }, { etiqueta: 'En curso', valor: resumen['en-curso'], color: 'text-amber-400' }, { etiqueta: 'Ganadas', valor: resumen.ganadas, color: 'text-emerald-400' }, { etiqueta: 'Perdidas', valor: resumen.perdidas, color: 'text-rose-400' }]
-    each tarjeta in tarjetas
-      div(class="bg-slate-900/60 border border-slate-800 rounded-xl p-4")
-        p(class="text-xs font-medium text-slate-500 uppercase tracking-wide")= tarjeta.etiqueta
+    - const tarjetas = [{ etiqueta: 'Participaciones', valor: resumen.todas, color: 'text-[#1A1614]', borderColor: 'border-l-[#C2410C]' }, { etiqueta: 'En curso', valor: resumen['en-curso'], color: 'text-[#D97706]', borderColor: 'border-l-[#D97706]' }, { etiqueta: 'Ganadas', valor: resumen.ganadas, color: 'text-[#059669]', borderColor: 'border-l-[#059669]' }, { etiqueta: 'Perdidas', valor: resumen.perdidas, color: 'text-[#DC2626]', borderColor: 'border-l-[#DC2626]' }]
+    each tarjeta, index in tarjetas
+      div(class=`bg-white border border-[#E2DDD5] border-l-4 ${tarjeta.borderColor} rounded-xl p-4 shadow-card anim-fade-up anim-fade-up-${index + 1}`)
+        p(class="text-xs font-medium text-[#8A7F76] uppercase tracking-wide")= tarjeta.etiqueta
         p(class=`text-2xl font-extrabold mt-1 ${tarjeta.color}`)= tarjeta.valor
 
   //- Pestañas de filtro por estado
-  div(class="bg-slate-900/60 border border-slate-800 rounded-xl p-2 mb-6")
+  div(class="bg-white border border-[#E2DDD5] rounded-xl p-2 mb-6 shadow-card anim-fade-up anim-fade-up-2")
     div(class="flex flex-wrap gap-1")
       each pestana in pestanas
-        a(href=`/historial?estado=${pestana.clave}` class=`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pestana.clave === filtroActual ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`)
+        a(href=`/historial?estado=${pestana.clave}` class=`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${pestana.clave === filtroActual ? 'bg-[#D97706] text-white' : 'text-[#8A7F76] hover:text-[#1A1614] hover:bg-[#EFECE6]'}`)
           span= pestana.etiqueta
-          span(class=`text-xs font-semibold ${pestana.clave === filtroActual ? 'text-emerald-100' : 'text-slate-500'}`)= resumen[pestana.clave]
+          span(class=`text-xs font-semibold ${pestana.clave === filtroActual ? 'text-amber-200' : 'text-[#ADA69E]'}`)= resumen[pestana.clave]
 
   if historial && historial.length > 0
     //- Tabla de registros del historial
-    div(class="bg-slate-900/60 border border-slate-800 rounded-xl overflow-hidden")
+    div(class="bg-white border border-[#E2DDD5] rounded-xl overflow-hidden shadow-card anim-fade-up anim-fade-up-3")
       div(class="overflow-x-auto")
         table(class="w-full text-sm text-left")
-          thead(class="text-xs uppercase tracking-wide text-slate-500 border-b border-slate-800")
+          thead(class="text-xs uppercase tracking-wide text-[#8A7F76] border-b border-[#E2DDD5] bg-[#F7F4EF]")
             tr
               th(class="px-5 py-3 font-medium") Subasta
               th(class="px-5 py-3 font-medium") Mi puja más alta
@@ -52,62 +52,62 @@ block contenido
               th(class="px-5 py-3 font-medium") Estado
               th(class="px-5 py-3 font-medium") Fecha
 
-          tbody(class="divide-y divide-slate-800/60")
+          tbody(class="divide-y divide-[#EBE5DC]")
             each registro in historial
-              tr(class="hover:bg-slate-800/40 transition-colors")
+              tr(class="hover:bg-[#F7F4EF] transition-colors")
 
                 //- Título de la subasta (con miniatura y categoría)
                 td(class="px-5 py-4")
                   a(href=`/subastas/${registro.id}` class="flex items-center gap-3 group")
-                    div(class="w-10 h-10 rounded-lg bg-slate-950 border border-slate-800 overflow-hidden flex-shrink-0 flex items-center justify-center")
+                    div(class="w-10 h-10 rounded-lg bg-[#EFECE6] border border-[#E2DDD5] overflow-hidden flex-shrink-0 flex items-center justify-center")
                       if registro.imagen_url
                         img(src=registro.imagen_url alt=registro.titulo class="w-full h-full object-cover")
                       else
-                        svg(class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+                        svg(class="w-5 h-5 text-[#ADA69E]" fill="none" stroke="currentColor" viewBox="0 0 24 24")
                           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z")
                     div(class="min-w-0")
-                      p(class="font-semibold text-white group-hover:text-emerald-400 transition-colors truncate max-w-xs")= registro.titulo
-                      p(class="text-xs text-slate-500 truncate")= registro.categoria
+                      p(class="font-semibold text-[#1A1614] group-hover:text-[#D97706] transition-colors truncate max-w-xs")= registro.titulo
+                      p(class="text-xs text-[#ADA69E] truncate")= registro.categoria
 
                 //- Mi puja más alta
                 td(class="px-5 py-4 whitespace-nowrap")
                   if registro.mi_puja_maxima !== null
-                    span(class="font-semibold text-slate-200")= formatearMonto(registro.mi_puja_maxima)
-                    span(class="block text-xs text-slate-500") #{registro.total_mis_pujas} #{registro.total_mis_pujas === 1 ? 'puja' : 'pujas'}
+                    span(class="font-semibold text-[#1A1614]")= formatearMonto(registro.mi_puja_maxima)
+                    span(class="block text-xs text-[#ADA69E]") #{registro.total_mis_pujas} #{registro.total_mis_pujas === 1 ? 'puja' : 'pujas'}
                   else
-                    span(class="text-slate-500") Sin pujas
+                    span(class="text-[#ADA69E]") Sin pujas
 
                 //- Precio final / actual
                 td(class="px-5 py-4 whitespace-nowrap")
-                  span(class="font-semibold text-emerald-400")= formatearMonto(registro.precio)
-                  span(class="block text-xs text-slate-500")= registro.precio_es_final ? 'Precio final' : 'Puja actual'
+                  span(class="font-semibold text-[#D97706]")= formatearMonto(registro.precio)
+                  span(class="block text-xs text-[#ADA69E]")= registro.precio_es_final ? 'Precio final' : 'Puja actual'
 
                 //- Estado de la participación
                 td(class="px-5 py-4")
                   span(class=`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${estilosEstado[registro.estado]}`)
                     if registro.estado === 'en_curso'
-                      span(class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse")
+                      span(class="w-1.5 h-1.5 rounded-full bg-[#D97706] dot-live")
                     span= registro.etiqueta_estado
 
                 //- Fecha de cierre (o de finalización prevista)
-                td(class="px-5 py-4 text-slate-400 whitespace-nowrap")= formatearFecha(registro.fecha)
+                td(class="px-5 py-4 text-[#8A7F76] whitespace-nowrap")= formatearFecha(registro.fecha)
 
   else
     //- Estado vacío: sin historial o sin resultados para el filtro activo
-    div(class="bg-slate-900/60 border border-slate-800 rounded-xl text-center py-20 px-6")
-      div(class="mx-auto w-20 h-20 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center mb-6")
-        svg(class="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+    div(class="bg-white border border-[#E2DDD5] rounded-xl text-center py-20 px-6 shadow-card anim-fade-up")
+      div(class="mx-auto w-20 h-20 rounded-2xl bg-[#EFECE6] border border-[#E2DDD5] flex items-center justify-center mb-6")
+        svg(class="w-10 h-10 text-[#ADA69E]" fill="none" stroke="currentColor" viewBox="0 0 24 24")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01")
 
       if resumen.todas === 0
-        h3(class="text-xl font-bold text-slate-300 mb-2") Todavía no has participado en ninguna subasta
-        p(class="text-slate-500 max-w-md mx-auto mb-6") Cuando realices tu primera puja, aquí verás el detalle de cada subasta y si la ganaste.
-        a(href="/subastas" class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors")
+        h3(class="text-xl font-bold text-[#1A1614] mb-2") Todavía no has participado en ninguna subasta
+        p(class="text-[#8A7F76] max-w-md mx-auto mb-6 text-sm") Cuando realices tu primera puja, aquí verás el detalle de cada subasta y si la ganaste.
+        a(href="/subastas" class="inline-flex items-center gap-2 bg-[#D97706] hover:bg-[#B45309] text-white font-semibold px-6 py-3 rounded-[10px] transition-colors shadow-btn")
           svg(class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24")
             path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z")
           span Explorar subastas
       else
-        h3(class="text-xl font-bold text-slate-300 mb-2") No hay subastas con este filtro
-        p(class="text-slate-500 max-w-md mx-auto mb-6") Tu historial tiene registros, pero ninguno coincide con el estado seleccionado.
-        a(href="/historial?estado=todas" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold px-6 py-3 rounded-xl border border-slate-700 transition-colors")
+        h3(class="text-xl font-bold text-[#1A1614] mb-2") No hay subastas con este filtro
+        p(class="text-[#8A7F76] max-w-md mx-auto mb-6 text-sm") Tu historial tiene registros, pero ninguno coincide con el estado seleccionado.
+        a(href="/historial?estado=todas" class="inline-flex items-center gap-2 bg-[#EFECE6] hover:bg-[#E2DDD5] text-[#1A1614] font-semibold px-6 py-3 rounded-[10px] border border-[#E2DDD5] transition-colors")
           span Ver todo el historial

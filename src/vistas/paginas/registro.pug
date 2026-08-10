@@ -5,29 +5,60 @@ html(lang="es")
     meta(charset="UTF-8")
     meta(name="viewport" content="width=device-width, initial-scale=1.0")
     title= titulo || 'Registro - SubastasPro'
+
+    //- Google Fonts: Inter
+    link(rel="preconnect" href="https://fonts.googleapis.com")
+    link(rel="preconnect" href="https://fonts.gstatic.com" crossorigin)
+    link(href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet")
+
     script(src="https://cdn.tailwindcss.com")
+    script.
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Inter"', 'system-ui', 'sans-serif'],
+            }
+          }
+        }
+      }
 
-  body(class="bg-slate-950 flex items-center justify-center min-h-screen font-sans antialiased py-10")
+    style.
+      @keyframes fadeSlideUp {
+        0% { opacity: 0; transform: translateY(16px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+      .anim-fade-up { animation: fadeSlideUp 0.5s ease-out both; }
 
-    div(class="w-full max-w-md bg-slate-900/60 border border-slate-800 rounded-2xl shadow-xl p-8 backdrop-blur-xl")
+  body(class="bg-[#F7F4EF] flex items-center justify-center min-h-screen font-sans antialiased py-10")
 
-      h1(class="text-3xl font-bold text-center text-white mb-2") Crear una Cuenta
-      p(id="subtitulo-registro" class="text-center text-slate-400 mb-6") Regístrate gratis y empieza a pujar.
+    div(class="w-full max-w-md bg-white border border-[#E2DDD5] rounded-[16px] shadow-lg p-8 anim-fade-up")
+
+      //- Logo
+      div(class="flex justify-center mb-6")
+        a(href="/" class="flex items-center gap-2")
+          div(class="w-9 h-9 rounded-lg bg-[#D97706] flex items-center justify-center")
+            svg(class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2")
+              path(stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z")
+          span(class="font-bold text-xl text-[#1A1614]") SubastasPro
+
+      h1(class="text-2xl font-bold text-center text-[#1A1614] mb-1") Crear una Cuenta
+      p(id="subtitulo-registro" class="text-center text-[#8A7F76] mb-6 text-sm") Regístrate gratis y empieza a pujar.
 
       //- Alerta de error
-      div(id="alerta-error" class="hidden mb-6 bg-red-500/10 border border-red-500/30 text-red-400 text-sm p-4 rounded-xl flex items-center gap-2")
+      div(id="alerta-error" class="hidden mb-6 bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-sm p-4 rounded-xl flex items-center gap-2")
         svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
         span(id="mensaje-error")
 
       //- Alerta de información
-      div(id="alerta-info" class="hidden mb-6 bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm p-4 rounded-xl flex items-center gap-2")
+      div(id="alerta-info" class="hidden mb-6 bg-[#FFFBEB] border border-[#FDE68A] text-[#D97706] text-sm p-4 rounded-xl flex items-center gap-2")
         svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
         span(id="mensaje-info")
 
       //- Alerta de éxito
-      div(id="alerta-exito" class="hidden mb-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm p-4 rounded-xl flex items-center gap-2")
+      div(id="alerta-exito" class="hidden mb-6 bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-sm p-4 rounded-xl flex items-center gap-2")
         svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7")
         span ¡Cuenta creada correctamente! Redirigiendo al inicio de sesión...
@@ -36,47 +67,47 @@ html(lang="es")
       form(id="form-paso-1" class="space-y-5")
 
         div
-          label(class="block text-slate-300 mb-2 text-sm font-medium") Nombre completo
-          input(type="text" id="nombre" name="nombre" placeholder="María González" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          label(class="block text-[#1A1614] mb-2 text-sm font-medium") Nombre completo
+          input(type="text" id="nombre" name="nombre" placeholder="María González" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
 
         div
-          label(class="block text-slate-300 mb-2 text-sm font-medium") Correo electrónico (Gmail)
-          input(type="email" id="correo" name="correo" placeholder="tu@gmail.com" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          label(class="block text-[#1A1614] mb-2 text-sm font-medium") Correo electrónico (Gmail)
+          input(type="email" id="correo" name="correo" placeholder="tu@gmail.com" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
 
         div
-          label(class="block text-slate-300 mb-2 text-sm font-medium") Contraseña
-          input(type="password" id="clave" name="clave" placeholder="********" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          label(class="block text-[#1A1614] mb-2 text-sm font-medium") Contraseña
+          input(type="password" id="clave" name="clave" placeholder="••••••••" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
 
         div
-          label(class="block text-slate-300 mb-2 text-sm font-medium") Confirmar contraseña
-          input(type="password" id="confirmarClave" name="confirmarClave" placeholder="********" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+          label(class="block text-[#1A1614] mb-2 text-sm font-medium") Confirmar contraseña
+          input(type="password" id="confirmarClave" name="confirmarClave" placeholder="••••••••" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
 
-        label(class="flex items-center gap-2 text-slate-400 text-sm")
-          input(type="checkbox" required class="rounded border-slate-700 bg-slate-800 text-emerald-500")
+        label(class="flex items-center gap-2 text-[#8A7F76] text-sm cursor-pointer")
+          input(type="checkbox" required class="rounded border-[#E2DDD5] bg-[#EFECE6] text-[#D97706] focus:ring-[#FDE68A]")
           | Acepto los términos y condiciones
 
-        button(type="submit" id="btn-solicitar-codigo" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
+        button(type="submit" id="btn-solicitar-codigo" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-3 rounded-[10px] transition-colors shadow-btn")
           | Enviar Código a mi Gmail
 
       //- Formulario Paso 2: Verificación de Código OTP (Oculto inicialmente)
       form(id="form-paso-2" class="hidden space-y-5")
 
         div(class="text-center")
-          label(class="block text-slate-300 mb-2 text-sm font-medium") Código de verificación (6 dígitos)
-          input(type="text" id="codigo" name="codigo" placeholder="123456" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-4 text-center font-mono text-2xl tracking-[0.4em] text-emerald-400 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-colors")
+          label(class="block text-[#1A1614] mb-2 text-sm font-medium") Código de verificación (6 dígitos)
+          input(type="text" id="codigo" name="codigo" placeholder="123456" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-4 text-center font-mono text-2xl tracking-[0.4em] text-[#D97706] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
 
-        button(type="submit" id="btn-verificar" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20")
+        button(type="submit" id="btn-verificar" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-3 rounded-[10px] transition-colors shadow-btn")
           | Verificar y Crear Cuenta
 
-        div(class="flex items-center justify-between text-xs text-slate-400 pt-2")
-          button(type="button" id="btn-volver" class="hover:text-slate-200 transition-colors")
+        div(class="flex items-center justify-between text-xs text-[#8A7F76] pt-2")
+          button(type="button" id="btn-volver" class="hover:text-[#1A1614] transition-colors")
             | ← Modificar correo
-          button(type="button" id="btn-reenviar" disabled class="disabled:opacity-50 hover:text-emerald-400 transition-colors text-emerald-500 font-medium")
+          button(type="button" id="btn-reenviar" disabled class="disabled:opacity-50 hover:text-[#D97706] transition-colors text-[#D97706] font-medium")
             | Reenviar código (<span id="contador-reenvio">60</span>s)
 
-      p(class="text-center text-slate-400 text-sm mt-6")
+      p(class="text-center text-[#8A7F76] text-sm mt-6")
         | ¿Ya tienes cuenta?
-        a(href="/iniciar-sesion" class="text-emerald-400 ml-1 hover:underline font-medium") Inicia sesión
+        a(href="/iniciar-sesion" class="text-[#D97706] ml-1 hover:underline font-medium") Inicia sesión
 
     script.
       const formPaso1 = document.getElementById('form-paso-1');

@@ -4,89 +4,89 @@ block contenido
 
   div(class="max-w-3xl mx-auto")
 
-    div(class="mb-8")
-      h1(class="text-2xl lg:text-3xl font-bold text-white") Publicar Nueva Subasta
-      p(class="text-slate-400 mt-1") Completa el formulario para enviar tu artículo a revisión.
+    div(class="mb-8 anim-fade-up")
+      h1(class="text-2xl lg:text-3xl font-bold text-[#1A1614]") Publicar Nueva Subasta
+      p(class="text-[#8A7F76] mt-1 text-sm") Completa el formulario para enviar tu artículo a revisión.
 
     //- Alerta de error
-    div(id="alerta-error" class="hidden mb-6 bg-red-500/10 border border-red-500/30 text-red-400 text-sm p-4 rounded-xl flex items-center gap-2")
+    div(id="alerta-error" class="hidden mb-6 bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-sm p-4 rounded-xl flex items-center gap-2")
       svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
         path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
       span(id="mensaje-error")
 
     //- Alerta de éxito
-    div(id="alerta-exito" class="hidden mb-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm p-4 rounded-xl flex items-center gap-2")
+    div(id="alerta-exito" class="hidden mb-6 bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-sm p-4 rounded-xl flex items-center gap-2")
       svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
         path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7")
       span(id="mensaje-exito") ¡Subasta publicada correctamente! Un administrador la revisará pronto.
 
     //- Formulario
-    div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 lg:p-8 backdrop-blur-xl")
+    div(class="bg-white border border-[#E2DDD5] rounded-[16px] p-6 lg:p-8 shadow-card anim-fade-up anim-fade-up-1")
 
       form(id="form-crear-subasta" enctype="multipart/form-data" class="space-y-6")
 
         //- Título
         div
-          label(for="titulo" class="block text-slate-300 mb-2 text-sm font-medium") Título del artículo
-          input(type="text" id="titulo" name="titulo" required minlength="5" maxlength="150" placeholder="Ej: MacBook Pro 14 pulgadas 2024" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
-          p(class="text-slate-600 text-xs mt-1") Entre 5 y 150 caracteres.
+          label(for="titulo" class="block text-[#1A1614] mb-2 text-sm font-medium") Título del artículo
+          input(type="text" id="titulo" name="titulo" required minlength="5" maxlength="150" placeholder="Ej: MacBook Pro 14 pulgadas 2024" class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+          p(class="text-[#ADA69E] text-xs mt-1") Entre 5 y 150 caracteres.
 
         //- Descripción
         div
-          label(for="descripcion" class="block text-slate-300 mb-2 text-sm font-medium") Descripción
-          textarea(id="descripcion" name="descripcion" required rows="4" placeholder="Describe tu artículo: condición, especificaciones, historia, etc." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none")
+          label(for="descripcion" class="block text-[#1A1614] mb-2 text-sm font-medium") Descripción
+          textarea(id="descripcion" name="descripcion" required rows="4" placeholder="Describe tu artículo: condición, especificaciones, historia, etc." class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all resize-none")
 
         //- Precio y Tiempo en grid
         div(class="grid grid-cols-1 md:grid-cols-2 gap-6")
 
           //- Precio inicial
           div
-            label(for="precio_inicial" class="block text-slate-300 mb-2 text-sm font-medium") Precio inicial (MXN)
+            label(for="precio_inicial" class="block text-[#1A1614] mb-2 text-sm font-medium") Precio inicial (MXN)
             div(class="relative")
-              span(class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold") $
-              input(type="number" id="precio_inicial" name="precio_inicial" required min="0.01" step="0.01" placeholder="100.00" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 pl-8 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors")
+              span(class="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A7F76] font-semibold") $
+              input(type="number" id="precio_inicial" name="precio_inicial" required min="0.01" step="0.01" placeholder="100.00" class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 pl-8 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
 
           //- Tiempo de inactividad
           div
-            label(for="tiempo_inactividad_minutos" class="block text-slate-300 mb-2 text-sm font-medium") Tiempo de inactividad
-            select(id="tiempo_inactividad_minutos" name="tiempo_inactividad_minutos" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors")
+            label(for="tiempo_inactividad_minutos" class="block text-[#1A1614] mb-2 text-sm font-medium") Tiempo de inactividad
+            select(id="tiempo_inactividad_minutos" name="tiempo_inactividad_minutos" class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
               option(value="3") 3 minutos
               option(value="5" selected) 5 minutos
               option(value="10") 10 minutos
               option(value="15") 15 minutos
               option(value="30") 30 minutos
-            p(class="text-slate-600 text-xs mt-1") La subasta cierra si no recibe pujas en este tiempo.
+            p(class="text-[#ADA69E] text-xs mt-1") La subasta cierra si no recibe pujas en este tiempo.
 
         //- Programación: Inicio y Duración
         div(class="grid grid-cols-1 md:grid-cols-2 gap-6")
 
           //- Inicio de la subasta (después de aprobación)
           div
-            label(for="inicio_delay_minutos" class="block text-slate-300 mb-2 text-sm font-medium") Inicio de la subasta
-            select(id="inicio_delay_minutos" name="inicio_delay_minutos" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors")
+            label(for="inicio_delay_minutos" class="block text-[#1A1614] mb-2 text-sm font-medium") Inicio de la subasta
+            select(id="inicio_delay_minutos" name="inicio_delay_minutos" class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
               option(value="0" selected) Inmediata (al aprobar)
               option(value="10") En 10 minutos
               option(value="30") En 30 minutos
               option(value="60") En 1 hora
               option(value="180") En 3 horas
               option(value="1440") Día siguiente (24h)
-            p(class="text-slate-600 text-xs mt-1") Tiempo desde que se aprueba hasta que inicia.
+            p(class="text-[#ADA69E] text-xs mt-1") Tiempo desde que se aprueba hasta que inicia.
 
           //- Duración de la subasta
           div
-            label(for="duracion_horas" class="block text-slate-300 mb-2 text-sm font-medium") Duración de la subasta
-            select(id="duracion_horas" name="duracion_horas" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors")
+            label(for="duracion_horas" class="block text-[#1A1614] mb-2 text-sm font-medium") Duración de la subasta
+            select(id="duracion_horas" name="duracion_horas" class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
               option(value="1") 1 hora
               option(value="3") 3 horas
               option(value="6") 6 horas
               option(value="12") 12 horas
               option(value="24" selected) 24 horas
-            p(class="text-slate-600 text-xs mt-1") Tiempo máximo que la subasta estará activa.
+            p(class="text-[#ADA69E] text-xs mt-1") Tiempo máximo que la subasta estará activa.
 
         //- Categoría
         div
-          label(for="categoria_id" class="block text-slate-300 mb-2 text-sm font-medium") Categoría
-          select(id="categoria_id" name="categoria_id" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors")
+          label(for="categoria_id" class="block text-[#1A1614] mb-2 text-sm font-medium") Categoría
+          select(id="categoria_id" name="categoria_id" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
             option(value="" disabled selected) Selecciona una categoría
             if categorias && categorias.length > 0
               each cat in categorias
@@ -96,32 +96,32 @@ block contenido
 
         //- Imagen (subida de archivo)
         div
-          label(for="imagen" class="block text-slate-300 mb-2 text-sm font-medium") Imagen del artículo (opcional)
-          div(id="zona-imagen" class="relative border-2 border-dashed border-slate-700 rounded-xl p-8 text-center cursor-pointer hover:border-emerald-500/50 transition-colors")
+          label(for="imagen" class="block text-[#1A1614] mb-2 text-sm font-medium") Imagen del artículo (opcional)
+          div(id="zona-imagen" class="relative border-2 border-dashed border-[#E2DDD5] rounded-[16px] p-8 text-center cursor-pointer hover:border-[#D97706] hover:bg-[#FFFBEB]/30 transition-all")
             input(type="file" id="imagen" name="imagen" accept="image/jpeg,image/png,image/gif,image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer")
             div(id="placeholder-imagen")
-              svg(class="w-10 h-10 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+              svg(class="w-10 h-10 text-[#ADA69E] mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24")
                 path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z")
-              p(class="text-slate-400 text-sm font-medium") Haz clic o arrastra una imagen aquí
-              p(class="text-slate-600 text-xs mt-1") JPG, PNG, GIF o WEBP · Máximo 5 MB
+              p(class="text-[#3D3530] text-sm font-medium") Haz clic o arrastra una imagen aquí
+              p(class="text-[#ADA69E] text-xs mt-1") JPG, PNG, GIF o WEBP · Máximo 5 MB
             div(id="preview-imagen" class="hidden")
               img(id="preview-img" class="max-h-48 mx-auto rounded-lg" alt="Vista previa")
-              p(id="nombre-archivo" class="text-emerald-400 text-sm font-medium mt-2")
-              button(type="button" id="btn-quitar-imagen" class="text-rose-400 text-xs mt-1 hover:underline") Quitar imagen
+              p(id="nombre-archivo" class="text-[#D97706] text-sm font-medium mt-2")
+              button(type="button" id="btn-quitar-imagen" class="text-[#DC2626] text-xs mt-1 hover:underline") Quitar imagen
 
         //- Nota informativa
-        div(class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4")
+        div(class="bg-[#FFFBEB] border border-[#FDE68A] rounded-xl p-4")
           div(class="flex items-start gap-3")
-            svg(class="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+            svg(class="w-5 h-5 text-[#D97706] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
               path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
             div
-              p(class="text-amber-400 text-sm font-semibold") Tu subasta será revisada antes de publicarse
-              p(class="text-slate-400 text-xs mt-1") Un administrador revisará tu publicación. Las imágenes se eliminan automáticamente cuando la subasta finaliza.
+              p(class="text-[#92400E] text-sm font-semibold") Tu subasta será revisada antes de publicarse
+              p(class="text-[#8A7F76] text-xs mt-1") Un administrador revisará tu publicación. Las imágenes se eliminan automáticamente cuando la subasta finaliza.
 
         //- Botón submit
         div(class="flex justify-end gap-4")
-          a(href="/subastas" class="px-6 py-3 rounded-lg text-slate-400 hover:text-white border border-slate-700 hover:border-slate-600 transition-colors font-medium") Cancelar
-          button(type="submit" id="btn-publicar" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20") Publicar Subasta
+          a(href="/subastas" class="px-6 py-3 rounded-[10px] text-[#8A7F76] hover:text-[#1A1614] border border-[#E2DDD5] hover:border-[#ADA69E] transition-colors font-medium") Cancelar
+          button(type="submit" id="btn-publicar" class="bg-[#D97706] hover:bg-[#B45309] text-white font-bold px-8 py-3 rounded-[10px] transition-colors shadow-btn") Publicar Subasta
 
 block scripts
   script.

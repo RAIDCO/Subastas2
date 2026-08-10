@@ -2,15 +2,15 @@ extends ../disenos/autenticado.pug
 
 block contenido
 
-  h1(class="text-3xl font-bold text-white mb-8") Mi Perfil
+  h1(class="text-2xl font-bold text-[#1A1614] mb-8 anim-fade-up") Mi Perfil
 
   //- Alerta de resultado (se muestra/oculta con JS al guardar cambios)
-  div(id="alerta-error" class="hidden mb-6 bg-red-500/10 border border-red-500/30 text-red-400 text-sm p-4 rounded-xl flex items-center gap-2")
+  div(id="alerta-error" class="hidden mb-6 bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-sm p-4 rounded-xl flex items-center gap-2")
     svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
       path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
     span(id="mensaje-error")
 
-  div(id="alerta-exito" class="hidden mb-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm p-4 rounded-xl flex items-center gap-2")
+  div(id="alerta-exito" class="hidden mb-6 bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-sm p-4 rounded-xl flex items-center gap-2")
     svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
       path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7")
     span(id="mensaje-exito") Perfil actualizado correctamente.
@@ -19,51 +19,51 @@ block contenido
 
     //- Tarjeta principal con la información del usuario
     div(class="md:col-span-1")
-      div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-center backdrop-blur-xl")
+      div(class="bg-white border border-[#E2DDD5] rounded-[16px] p-6 text-center shadow-card anim-fade-up anim-fade-up-1")
 
         //- Avatar con la inicial del usuario
-        div(class="mx-auto w-24 h-24 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-3xl font-bold text-emerald-400 mb-4")
+        div(class="mx-auto w-24 h-24 rounded-full bg-[#FFFBEB] border-2 border-[#FDE68A] flex items-center justify-center text-3xl font-bold text-[#D97706] mb-4")
           span= usuario ? usuario.nombre.charAt(0).toUpperCase() : 'U'
 
-        h2(class="text-xl font-semibold text-white")= usuario ? usuario.nombre : 'Nombre del usuario'
-        p(class="text-slate-400 text-sm mt-1")= usuario ? usuario.correo : 'correo@ejemplo.com'
+        h2(class="text-xl font-semibold text-[#1A1614]")= usuario ? usuario.nombre : 'Nombre del usuario'
+        p(class="text-[#8A7F76] text-sm mt-1")= usuario ? usuario.correo : 'correo@ejemplo.com'
 
-        span(class=`inline-block mt-4 px-3 py-1 rounded-full text-xs font-semibold ${usuario && usuario.rol === 'administrador' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-300 border border-slate-700'}`)
+        span(class=`inline-block mt-4 px-3 py-1 rounded-full text-xs font-semibold ${usuario && usuario.rol === 'administrador' ? 'bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]' : 'bg-[#EFECE6] text-[#3D3530] border border-[#E2DDD5]'}`)
           = usuario && usuario.rol === 'administrador' ? 'Administrador' : 'Usuario'
 
     //- Formulario de edición de datos
     div(class="md:col-span-2")
-      div(class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl")
+      div(class="bg-white border border-[#E2DDD5] rounded-[16px] p-6 shadow-card anim-fade-up anim-fade-up-2")
 
-        h3(class="text-lg font-semibold text-white mb-6") Configuración de la cuenta
+        h3(class="text-lg font-semibold text-[#1A1614] mb-6") Configuración de la cuenta
 
         form(id="form-perfil" class="space-y-5")
 
           div
-            label(class="block text-slate-300 mb-2 text-sm font-medium") Nuevo nombre
+            label(class="block text-[#1A1614] mb-2 text-sm font-medium") Nuevo nombre
             input(
               type="text"
               id="nuevoNombre"
               name="nombre"
               placeholder="Escribe tu nuevo nombre"
               value=usuario ? usuario.nombre : ''
-              class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all"
             )
 
           div
-            label(class="block text-slate-300 mb-2 text-sm font-medium") Nueva contraseña (opcional)
+            label(class="block text-[#1A1614] mb-2 text-sm font-medium") Nueva contraseña (opcional)
             input(
               type="password"
               id="nuevaClave"
               name="clave"
               placeholder="Déjalo en blanco para no cambiarla"
-              class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all"
             )
 
           button(
             type="submit"
             id="btn-guardar"
-            class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-lg shadow-emerald-500/20"
+            class="bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-3 px-6 rounded-[10px] transition-colors shadow-btn"
           ) Guardar Cambios
 
 block scripts
