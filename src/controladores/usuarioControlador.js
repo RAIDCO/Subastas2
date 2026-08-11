@@ -2,7 +2,7 @@
 const { Op } = require("sequelize");
 const bcrypt = require("bcryptjs");
 
-const { Subasta, Puja, Categoria, Usuario } = require("../modelos");
+const { Subasta, Puja, Categoria, Usuario, Favorito } = require("../modelos");
 const { CLAVE_LONGITUD_MINIMA, RONDAS_SAL } = require("../utilidades/constantes");
 const { responderExito, responderError, capturarAsincrono } = require("../utilidades/manejadorErrores");
 
@@ -265,10 +265,60 @@ const actualizarPerfil = capturarAsincrono(async (req, res) => {
     });
 });
 
+//====================================
+// TOGGLE FAVORITO (WATCHLIST)
+// POST /api/usuario/favoritos/:subastaId
+//====================================
+
+const toggleFavorito = capturarAsincrono(async (req, res) => {
+    const usuarioId = req.usuario.id;
+    const { subastaId } = req.params;
+
+    if (!subastaId) {
+        return responderError(res, 400, "ID de subasta requerido.");
+    }
+
+    // Verificar que la subasta existe
+    const subasta = await Subasta.findByPk(subastaId);
+    if (!subasta) {
+        return responderError(res, 404, "Subasta no encontrada.");
+    }
+
+    // Buscar si ya existe el favorito
+    const existente = await Favorito.findOne({
+        where: { usuario_id: usuarioId, subasta_id: subastaId }
+    });
+
+    if (existente) {
+        await existente.destroy();
+        return responderExito(res, 200, "Subasta removida de favoritos.", { favorito: false });
+    }
+
+    await Favorito.create({ usuario_id: usuarioId, subasta_id: subastaId });
+    return responderExito(res, 201, "Subasta añadida a favoritos.", { favorito: true });
+});
+
+//====================================
+// OBTENER IDS DE FAVORITOS DEL USUARIO
+// GET /api/usuario/favoritos
+//====================================
+
+const obtenerFavoritos = capturarAsincrono(async (req, res) => {
+    const favoritos = await Favorito.findAll({
+        where: { usuario_id: req.usuario.id },
+        attributes: ["subasta_id"]
+    });
+
+    const ids = favoritos.map(f => f.subasta_id);
+    return responderExito(res, 200, "Favoritos obtenidos.", { favoritosIds: ids });
+});
+
 module.exports = {
     ESTADOS_HISTORIAL,
     obtenerHistorialUsuario,
     mostrarVistaPerfil,
     obtenerPerfil,
-    actualizarPerfil
+    actualizarPerfil,
+    toggleFavorito,
+    obtenerFavoritos
 };

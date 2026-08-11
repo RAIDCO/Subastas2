@@ -53,6 +53,7 @@ const mostrarDetalleSubasta = capturarAsincrono(async (req, res) => {
             titulo: subasta.titulo,
             descripcion: subasta.descripcion,
             imagen_url: subasta.imagen_url,
+            imagenes_urls: subasta.imagenes_urls || [],
             precio_inicial: Number(subasta.precio_inicial),
             precio_actual: Number(subasta.precio_actual),
             estado: subasta.estado,
@@ -131,15 +132,32 @@ const crearSubasta = capturarAsincrono(async (req, res) => {
     const delayMinutos = Number(inicio_delay_minutos) || 0;
     const duracion = Number(duracion_horas) || 24;
 
-    // Imagen: si se subió un archivo (Cloudinary devuelve URL en req.file.path, multer local devuelve req.file.filename)
+    // Extraer URL de archivo subido (Cloudinary path o local filename)
+    const obtenerUrlArchivo = (f) => {
+        if (!f) return null;
+        return (f.path && f.path.startsWith("http"))
+            ? f.path
+            : (f.filename ? `/uploads/${f.filename}` : f.path);
+    };
+
+    // Imagen principal
     let fileUrl = null;
-    if (req.file) {
-        fileUrl = (req.file.path && req.file.path.startsWith("http"))
-            ? req.file.path
-            : (req.file.filename ? `/uploads/${req.file.filename}` : req.file.path);
+    if (req.files && req.files['imagen'] && req.files['imagen'].length > 0) {
+        fileUrl = obtenerUrlArchivo(req.files['imagen'][0]);
+    } else if (req.file) {
+        fileUrl = obtenerUrlArchivo(req.file);
     }
     const webUrl = imagen_url ? String(imagen_url).trim() : "";
     const imagenFinal = fileUrl || (webUrl !== "" ? webUrl : null);
+
+    // Imágenes de la galería
+    const imagenesGaleria = [];
+    if (req.files && req.files['imagenes_extra'] && req.files['imagenes_extra'].length > 0) {
+        req.files['imagenes_extra'].forEach(f => {
+            const url = obtenerUrlArchivo(f);
+            if (url) imagenesGaleria.push(url);
+        });
+    }
 
     // Fechas provisionales (se recalculan al aprobar la subasta)
     const fechaInicio = new Date(Date.now() + delayMinutos * 60 * 1000);
@@ -149,6 +167,7 @@ const crearSubasta = capturarAsincrono(async (req, res) => {
         titulo: tituloLimpio,
         descripcion: String(descripcion).trim(),
         imagen_url: imagenFinal,
+        imagenes_urls: imagenesGaleria,
         precio_inicial: precioNum,
         precio_actual: precioNum,
         estado: "pendiente",

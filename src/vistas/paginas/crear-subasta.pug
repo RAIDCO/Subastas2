@@ -94,24 +94,27 @@ block contenido
             else
               option(value="" disabled) No hay categorías disponibles
 
-        //- Imagen del artículo (Drag & Drop o explorador fácil de archivos)
-        div(class="space-y-3")
-          label(class="block text-[#1A1614] text-sm font-medium") Imagen del artículo (opcional)
+        //- Fotos de la subasta (Portada + Galería hasta 5 fotos total)
+        div(class="space-y-4")
+          div(class="flex items-center justify-between")
+            label(class="block text-[#1A1614] text-sm font-semibold") Fotos del artículo (máximo 5)
+            span(id="contador-fotos" class="text-xs text-[#8A7F76] font-medium") 0 / 5 fotos agregadas
 
-          //- Zona principal de arrastrar/seleccionar archivo
-          div(id="zona-imagen" class="relative border-2 border-dashed border-[#E2DDD5] rounded-[16px] p-8 text-center cursor-pointer hover:border-[#D97706] hover:bg-[#FFFBEB]/30 transition-all group")
-            input(type="file" id="imagen" name="imagen" accept="image/jpeg,image/png,image/gif,image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10")
-            div(id="placeholder-imagen" class="space-y-2")
-              div(class="w-12 h-12 rounded-full bg-[#FFFBEB] border border-[#FDE68A] flex items-center justify-center mx-auto text-[#D97706] group-hover:scale-110 transition-transform")
-                svg(class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2")
-                  path(stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z")
-              div
-                p(class="text-[#1A1614] font-semibold text-sm") Subir imagen desde tu dispositivo
-                p(class="text-[#8A7F76] text-xs mt-0.5") Haz clic para explorar tu equipo o arrastra un archivo aquí (JPG, PNG, WEBP)
-            div(id="preview-imagen" class="hidden relative z-20")
-              img(id="preview-img" class="max-h-48 mx-auto rounded-xl shadow-md object-cover" alt="Vista previa")
-              p(id="nombre-archivo" class="text-[#D97706] text-xs font-semibold mt-2 truncate max-w-xs mx-auto")
-              button(type="button" id="btn-quitar-imagen" class="mt-2 text-[#DC2626] text-xs font-medium hover:underline bg-[#FEF2F2] px-3 py-1 rounded-full border border-[#FECACA]") Quitar imagen
+          //- Grid de fotos subidas con vista previa y botón eliminar individual
+          div(id="grid-fotos" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3")
+            //- Las miniaturas se renderizan dinámicamente con JS aquí
+
+          //- Botón "+ Agregar foto" (visible si fotos < 5)
+          div(id="contenedor-btn-agregar" class="pt-1")
+            input(type="file" id="input-archivo-foto" accept="image/jpeg,image/png,image/gif,image/webp" multiple class="hidden")
+            button(
+              type="button"
+              id="btn-agregar-foto"
+              class="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#EFECE6] hover:bg-[#E2DDD5] text-[#1A1614] border border-[#E2DDD5] hover:border-[#ADA69E] px-5 py-3 rounded-[12px] text-xs font-semibold transition-all shadow-sm group"
+            )
+              svg(class="w-4.5 h-4.5 text-[#D97706] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2")
+                path(stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4")
+              span(id="texto-btn-agregar") + Subir fotos desde tu equipo (máximo 5)
 
           //- Opción secundaria opcional: URL directa de imagen web
           div(class="pt-1")
@@ -127,12 +130,12 @@ block contenido
               path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
             div
               p(class="text-[#92400E] text-sm font-semibold") Tu subasta será revisada antes de publicarse
-              p(class="text-[#8A7F76] text-xs mt-1") Un administrador revisará tu publicación. Las imágenes subidas permanecerán guardadas de forma permanente en tu subasta.
+              p(class="text-[#8A7F76] text-xs mt-1") Un administrador revisará tu publicación. La primera foto será la portada de la subasta.
 
         //- Botón submit
         div(class="flex justify-end gap-4")
-          a(href="/subastas" class="px-6 py-3 rounded-[10px] text-[#8A7F76] hover:text-[#1A1614] border border-[#E2DDD5] hover:border-[#ADA69E] transition-colors font-medium") Cancelar
-          button(type="submit" id="btn-publicar" class="bg-[#D97706] hover:bg-[#B45309] text-white font-bold px-8 py-3 rounded-[10px] transition-colors shadow-btn") Publicar Subasta
+          a(href="/subastas" class="px-6 py-3 rounded-[10px] text-[#8A7F76] hover:text-[#1A1614] border border-[#E2DDD5] hover:border-[#ADA69E] transition-colors font-medium text-sm") Cancelar
+          button(type="submit" id="btn-publicar" class="bg-[#D97706] hover:bg-[#B45309] text-white font-bold px-8 py-3 rounded-[10px] transition-colors shadow-btn text-sm") Publicar Subasta
 
 block scripts
   script.
@@ -141,35 +144,89 @@ block scripts
     const mensajeError = document.getElementById('mensaje-error');
     const alertaExito = document.getElementById('alerta-exito');
     const btnPublicar = document.getElementById('btn-publicar');
-    const inputImagen = document.getElementById('imagen');
-    const placeholderImagen = document.getElementById('placeholder-imagen');
-    const previewImagen = document.getElementById('preview-imagen');
-    const previewImg = document.getElementById('preview-img');
-    const nombreArchivo = document.getElementById('nombre-archivo');
-    const btnQuitarImagen = document.getElementById('btn-quitar-imagen');
 
-    // Vista previa de la imagen seleccionada
-    inputImagen.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
+    // Gestor interactivo de fotos (máximo 5)
+    let listaArchivosFotos = [];
+    const inputArchivo = document.getElementById('input-archivo-foto');
+    const btnAgregarFoto = document.getElementById('btn-agregar-foto');
+    const textoBtnAgregar = document.getElementById('texto-btn-agregar');
+    const gridFotos = document.getElementById('grid-fotos');
+    const contadorFotos = document.getElementById('contador-fotos');
+    const contenedorBtnAgregar = document.getElementById('contenedor-btn-agregar');
+
+    btnAgregarFoto.addEventListener('click', () => {
+      inputArchivo.click();
+    });
+
+    inputArchivo.addEventListener('change', (e) => {
+      const seleccionados = Array.from(e.target.files);
+      if (seleccionados.length === 0) return;
+
+      // Calcular cuántas fotos más caben hasta el máximo de 5
+      const disponibles = 5 - listaArchivosFotos.length;
+      const fotosAñadir = seleccionados.slice(0, disponibles);
+
+      listaArchivosFotos.push(...fotosAñadir);
+      inputArchivo.value = ''; // Limpiar input para permitir seleccionar de nuevo
+      renderizarFotos();
+    });
+
+    function renderizarFotos() {
+      gridFotos.innerHTML = '';
+      contadorFotos.textContent = `${listaArchivosFotos.length} / 5 fotos agregadas`;
+
+      if (listaArchivosFotos.length === 0) {
+        textoBtnAgregar.textContent = '+ Subir fotos desde tu equipo (máximo 5)';
+        contenedorBtnAgregar.classList.remove('hidden');
+      } else if (listaArchivosFotos.length < 5) {
+        const restantes = 5 - listaArchivosFotos.length;
+        textoBtnAgregar.textContent = `+ ¿Deseas agregar otra foto? (${restantes} disponible${restantes > 1 ? 's' : ''})`;
+        contenedorBtnAgregar.classList.remove('hidden');
+      } else {
+        contenedorBtnAgregar.classList.add('hidden');
+      }
+
+      listaArchivosFotos.forEach((file, index) => {
+        const card = document.createElement('div');
+        card.className = 'relative group bg-white border border-[#E2DDD5] rounded-xl overflow-hidden shadow-sm flex flex-col items-center';
+
         const reader = new FileReader();
         reader.onload = (ev) => {
-          previewImg.src = ev.target.result;
-          nombreArchivo.textContent = file.name;
-          placeholderImagen.classList.add('hidden');
-          previewImagen.classList.remove('hidden');
+          card.innerHTML = `
+            <div class="relative w-full h-24 bg-[#EFECE6] overflow-hidden">
+              <img src="${ev.target.result}" alt="${file.name}" class="w-full h-full object-cover">
+              ${index === 0 ? '<span class="absolute top-1 left-1 bg-[#D97706] text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">PORTADA</span>' : ''}
+              <button
+                type="button"
+                data-index="${index}"
+                class="btn-quitar-foto absolute top-1 right-1 bg-white/90 hover:bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] rounded-full p-1 shadow-sm transition-all flex items-center justify-center"
+                title="Quitar esta foto"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="p-1.5 w-full text-center bg-white">
+              <p class="text-[10px] text-[#3D3530] font-medium truncate">${file.name}</p>
+            </div>
+          `;
+
+          // Handler para eliminar una foto específica
+          const btnQuitar = card.querySelector('.btn-quitar-foto');
+          btnQuitar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            listaArchivosFotos.splice(index, 1);
+            renderizarFotos();
+          });
         };
         reader.readAsDataURL(file);
-      }
-    });
 
-    // Quitar imagen seleccionada
-    btnQuitarImagen.addEventListener('click', () => {
-      inputImagen.value = '';
-      placeholderImagen.classList.remove('hidden');
-      previewImagen.classList.add('hidden');
-      previewImg.src = '';
-    });
+        gridFotos.appendChild(card);
+      });
+    }
+
+    renderizarFotos();
 
     // Enviar formulario
     form.addEventListener('submit', async (e) => {
@@ -193,9 +250,20 @@ block scripts
 
       try {
         const token = localStorage.getItem('token');
-
-        // Usar FormData para enviar archivos
         const formData = new FormData(form);
+
+        // Adjuntar las fotos de la lista gestionada
+        formData.delete('imagen');
+        formData.delete('imagenes_extra');
+
+        if (listaArchivosFotos.length > 0) {
+          // La primera foto es la portada
+          formData.append('imagen', listaArchivosFotos[0]);
+          // Las fotos restantes son de la galería
+          for (let i = 1; i < listaArchivosFotos.length; i++) {
+            formData.append('imagenes_extra', listaArchivosFotos[i]);
+          }
+        }
 
         const respuesta = await fetch('/api/subastas', {
           method: 'POST',
@@ -211,8 +279,8 @@ block scripts
         if (datos.exito) {
           alertaExito.classList.remove('hidden');
           form.reset();
-          placeholderImagen.classList.remove('hidden');
-          previewImagen.classList.add('hidden');
+          listaArchivosFotos = [];
+          renderizarFotos();
           setTimeout(() => {
             window.location.href = '/subastas';
           }, 2000);

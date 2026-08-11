@@ -27,7 +27,7 @@ const obtenerExpiracion = () => process.env.JWT_EXPIRACION || "24h";
 // El token solo guarda datos públicos del usuario: nunca la clave.
 //====================================
 
-const generarToken = (usuario) => {
+const generarToken = (usuario, recordarme = false) => {
     const contenido = {
         id: usuario.id,
         correo: usuario.correo,
@@ -35,7 +35,7 @@ const generarToken = (usuario) => {
     };
 
     return jwt.sign(contenido, obtenerSecreto(), {
-        expiresIn: obtenerExpiracion()
+        expiresIn: recordarme ? "30d" : obtenerExpiracion()
     });
 };
 
@@ -98,12 +98,13 @@ const extraerToken = (req) => {
 // COOKIE DEL TOKEN
 //====================================
 
-const enviarCookieToken = (res, token) => {
+const enviarCookieToken = (res, token, recordarme = false) => {
+    const duracionMs = recordarme ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
     res.cookie(COOKIE_TOKEN, token, {
         httpOnly: true,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "produccion",
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: duracionMs
     });
 };
 

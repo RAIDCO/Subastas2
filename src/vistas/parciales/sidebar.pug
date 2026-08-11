@@ -39,6 +39,12 @@ aside(id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white bo
         path(stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01")
       span Mi Historial
 
+    //- Mis Favoritos
+    a(href="/favoritos" class=`flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm font-medium transition-all relative ${paginaActual === 'favoritos' ? 'bg-[#FFFBEB] text-[#D97706] border-l-[3px] border-[#D97706] pl-[9px]' : 'text-[#3D3530] hover:bg-[#EFECE6] hover:text-[#1A1614]'}`)
+      svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75")
+        path(stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z")
+      span Mis Favoritos
+
     //- Panel Admin (solo visible para administradores)
     if usuario && usuario.rol === 'administrador'
       a(href="/admin" class=`flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm font-medium transition-all relative ${paginaActual === 'admin' ? 'bg-[#FFFBEB] text-[#D97706] border-l-[3px] border-[#D97706] pl-[9px]' : 'text-[#3D3530] hover:bg-[#EFECE6] hover:text-[#1A1614]'}`)

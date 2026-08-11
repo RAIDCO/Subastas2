@@ -387,7 +387,7 @@ const restablecerClaveConCodigo = capturarAsincrono(async (req, res) => {
 //====================================
 
 const iniciarSesion = capturarAsincrono(async (req, res) => {
-    const { correo, clave } = req.body || {};
+    const { correo, clave, recordarme } = req.body || {};
 
     if (!correo || !clave) {
         return responderError(res, 400, "Debes ingresar correo y contraseña.", {
@@ -421,9 +421,10 @@ const iniciarSesion = capturarAsincrono(async (req, res) => {
         );
     }
 
-    const token = generarToken(usuario);
+    const esRecordar = Boolean(recordarme);
+    const token = generarToken(usuario, esRecordar);
 
-    enviarCookieToken(res, token);
+    enviarCookieToken(res, token, esRecordar);
 
     return responderExito(res, 200, "Sesión iniciada correctamente.", {
         usuario: usuarioPublico(usuario),

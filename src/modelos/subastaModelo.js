@@ -29,6 +29,12 @@ const Subasta = sequelize.define(
             allowNull: true
         },
 
+        imagenes_urls: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: []
+        },
+
         precio_inicial: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: false,

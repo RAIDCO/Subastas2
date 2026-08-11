@@ -4,12 +4,12 @@ const router = express.Router();
 
 const { crearSubasta } = require("../controladores/subastaControlador");
 const { verificarAutenticacion } = require("../intermediarios/autenticacionIntermediario");
-const { subirImagen } = require("../configuracion/multerConfig");
+const { subirImagenesGaleria } = require("../configuracion/multerConfig");
 
 /**
- * Crear una nueva subasta (requiere autenticación + imagen opcional).
+ * Crear una nueva subasta (requiere autenticación + imágenes opcionales).
  * POST /api/subastas
  */
-router.post("/", verificarAutenticacion, subirImagen.single("imagen"), crearSubasta);
+router.post("/", verificarAutenticacion, subirImagenesGaleria, crearSubasta);
 
 module.exports = router;

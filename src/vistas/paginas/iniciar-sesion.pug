@@ -69,7 +69,7 @@ html(lang="es")
 
         div(class="flex justify-between items-center text-sm")
           label(class="flex items-center gap-2 text-[#8A7F76] cursor-pointer")
-            input(type="checkbox" class="rounded border-[#E2DDD5] bg-[#EFECE6] text-[#D97706] focus:ring-[#FDE68A]")
+            input(type="checkbox" id="recordarme" name="recordarme" class="rounded border-[#E2DDD5] bg-[#EFECE6] text-[#D97706] focus:ring-[#FDE68A]")
             | Recordarme
 
           button(type="button" id="btn-abrir-recuperacion" class="text-[#D97706] hover:underline font-medium focus:outline-none") ¿Olvidaste tu contraseña?
@@ -345,6 +345,13 @@ html(lang="es")
         }
       });
 
+      // Auto-completar correo si se guardó anteriormente con Recordarme
+      const correoGuardado = localStorage.getItem('recordar_correo');
+      if (correoGuardado) {
+        document.getElementById('correo').value = correoGuardado;
+        document.getElementById('recordarme').checked = true;
+      }
+
       // Formulario de Login
       formLogin.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -353,6 +360,7 @@ html(lang="es")
 
         const correo = document.getElementById('correo').value;
         const clave = document.getElementById('clave').value;
+        const recordarme = document.getElementById('recordarme').checked;
 
         btnSubmit.disabled = true;
         btnSubmit.textContent = 'Iniciando sesión...';
@@ -361,7 +369,7 @@ html(lang="es")
           const respuesta = await fetch('/api/autenticacion/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ correo, clave })
+            body: JSON.stringify({ correo, clave, recordarme })
           });
 
           const datos = await respuesta.json();
@@ -370,6 +378,12 @@ html(lang="es")
             mensajeExito.textContent = '¡Sesión iniciada! Redirigiendo...';
             alertaExito.classList.remove('hidden');
             const usuario = datos.datos && datos.datos.usuario ? datos.datos.usuario : null;
+
+            if (recordarme) {
+              localStorage.setItem('recordar_correo', correo);
+            } else {
+              localStorage.removeItem('recordar_correo');
+            }
 
             if (datos.datos && datos.datos.token) {
               localStorage.setItem('token', datos.datos.token);

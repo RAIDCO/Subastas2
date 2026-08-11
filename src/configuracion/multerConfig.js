@@ -84,11 +84,18 @@ const subirImagen = multer({
     }
 });
 
+// Middleware para subir imagen principal + hasta 5 imágenes adicionales para la galería
+const subirImagenesGaleria = subirImagen.fields([
+    { name: "imagen", maxCount: 1 },
+    { name: "imagenes_extra", maxCount: 5 }
+]);
+
 const eliminarImagen = () => {
     // Las imágenes se mantienen almacenadas en la nube/servidor de forma permanente
 };
 
 module.exports = {
     subirImagen,
+    subirImagenesGaleria,
     eliminarImagen
 };

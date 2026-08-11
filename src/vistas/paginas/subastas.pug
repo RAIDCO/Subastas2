@@ -9,6 +9,8 @@ block contenido
         categoria: categoriaSel || 'Todas',
         estado: estadoSel || 'activa',
         orden: ordenSel || 'recientes',
+        precioMin: precioMin || '',
+        precioMax: precioMax || '',
         ...paramsNuevos
       };
       const query = new URLSearchParams();
@@ -16,6 +18,8 @@ block contenido
       if (actual.categoria && actual.categoria !== 'Todas') query.set('categoria', actual.categoria);
       if (actual.estado && actual.estado !== 'activa') query.set('estado', actual.estado);
       if (actual.orden && actual.orden !== 'recientes') query.set('orden', actual.orden);
+      if (actual.precioMin) query.set('precioMin', actual.precioMin);
+      if (actual.precioMax) query.set('precioMax', actual.precioMax);
       const queryString = query.toString();
       return `/subastas${queryString ? '?' + queryString : ''}`;
     };
@@ -41,7 +45,7 @@ block contenido
     //- 1. Filtro por Categorías (pills)
     div(class="flex flex-wrap items-center gap-2")
       span(class="text-[#8A7F76] text-xs font-semibold uppercase tracking-wider mr-2") Categoría:
-      - const listaCategorias = ['Todas', 'Tecnología', 'Coleccionables', 'Arte', 'Vehículos', 'Instrumentos']
+      - const listaCategorias = (categorias && categorias.length > 0) ? categorias : ['Todas', 'Tecnología', 'Coleccionables', 'Arte', 'Vehículos', 'Instrumentos', 'Hogar', 'Moda', 'Deportes', 'Joyería', 'Inmuebles', 'Otros']
       each cat in listaCategorias
         a(
           href=construirUrlFiltro({ categoria: cat })
@@ -90,12 +94,35 @@ block contenido
           option(value="mayor-precio" selected=(ordenSel === 'mayor-precio')) Mayor precio
           option(value="tiempo" selected=(ordenSel === 'tiempo')) Tiempo por finalizar
 
+    //- 3. Filtro por rango de precio
+    div(class="flex flex-wrap items-center gap-2 pt-3 border-t border-[#EBE5DC]")
+      span(class="text-[#8A7F76] text-xs font-semibold uppercase tracking-wider mr-2") Precio:
+      form(action="/subastas" method="GET" class="flex flex-wrap items-center gap-2")
+        if buscar
+          input(type="hidden" name="buscar" value=buscar)
+        if categoriaSel && categoriaSel !== 'Todas'
+          input(type="hidden" name="categoria" value=categoriaSel)
+        if estadoSel && estadoSel !== 'activa'
+          input(type="hidden" name="estado" value=estadoSel)
+        if ordenSel && ordenSel !== 'recientes'
+          input(type="hidden" name="orden" value=ordenSel)
+        div(class="flex items-center gap-1.5")
+          span(class="text-[#8A7F76] text-xs") $
+          input(type="number" name="precioMin" placeholder="Mín" value=precioMin step="0.01" min="0" class="w-24 bg-[#EFECE6] border border-[#E2DDD5] text-[#1A1614] rounded-[10px] px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#D97706] transition-colors")
+        span(class="text-[#ADA69E] text-xs") —
+        div(class="flex items-center gap-1.5")
+          span(class="text-[#8A7F76] text-xs") $
+          input(type="number" name="precioMax" placeholder="Máx" value=precioMax step="0.01" min="0" class="w-24 bg-[#EFECE6] border border-[#E2DDD5] text-[#1A1614] rounded-[10px] px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#D97706] transition-colors")
+        button(type="submit" class="bg-[#1A1614] hover:bg-[#3D3530] text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors") Filtrar
+        if precioMin || precioMax
+          a(href=construirUrlFiltro({ precioMin: '', precioMax: '' }) class="text-[#DC2626] hover:text-[#991B1B] text-xs font-medium ml-1") Limpiar
+
   //- Grid de subastas
   if subastas && subastas.length > 0
     div(class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6")
       each subasta, index in subastas
-        a(href=`/subastas/${subasta.id}` class="block group")
-          article(class=`bg-white border border-[#E2DDD5] rounded-[16px] overflow-hidden card-interactive shadow-card flex flex-col h-full anim-fade-up anim-fade-up-${Math.min(index + 1, 6)}`)
+        a(href=`/subastas/${subasta.id}` class=`block group h-full relative anim-fade-up anim-fade-up-${Math.min(index + 1, 6)}`)
+          article(class="bg-white border border-[#E2DDD5] rounded-[16px] overflow-hidden card-interactive shadow-card flex flex-col h-full")
 
             //- Imagen del artículo
             div(class="relative h-56 overflow-hidden bg-[#EFECE6]")
@@ -137,6 +164,16 @@ block contenido
                     path(stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12")
                   span RECHAZADA
 
+              //- Botón favorito (corazón en la esquina inferior derecha de la imagen)
+              button(
+                type="button"
+                data-subasta-id=subasta.id
+                class="btn-favorito absolute bottom-3 right-3 z-20 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm border border-[#E2DDD5] flex items-center justify-center hover:bg-[#FEF2F2] hover:border-[#FECACA] transition-all shadow-sm"
+                title="Guardar en favoritos"
+              )
+                svg(class="w-4 h-4 text-[#ADA69E] icono-corazon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2")
+                  path(stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z")
+
             //- Info de la subasta
             div(class="p-5 flex flex-col flex-grow")
               h3(class="text-base font-bold text-[#1A1614] mb-1 group-hover:text-[#D97706] transition-colors line-clamp-1")= subasta.titulo
@@ -165,3 +202,71 @@ block contenido
       div(class="flex justify-center gap-3")
         a(href="/subastas" class="bg-[#EFECE6] hover:bg-[#E2DDD5] text-[#1A1614] font-semibold text-xs px-5 py-2.5 rounded-[10px] border border-[#E2DDD5] transition-colors") Limpiar filtros
         a(href="/crear-subasta" class="bg-[#D97706] hover:bg-[#B45309] text-white font-semibold text-xs px-5 py-2.5 rounded-[10px] transition-colors shadow-btn") Publicar Subasta
+
+block scripts
+  script.
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      // Obtener lista de favoritos del usuario
+      try {
+        const resp = await fetch('/api/usuario/favoritos', {
+          headers: { 'Authorization': 'Bearer ' + token },
+          credentials: 'include'
+        });
+        const datos = await resp.json();
+        if (datos.exito && datos.datos.favoritosIds) {
+          const ids = new Set(datos.datos.favoritosIds);
+          document.querySelectorAll('.btn-favorito').forEach(btn => {
+            const subastaId = btn.dataset.subastaId;
+            if (ids.has(subastaId)) {
+              marcarFavorito(btn, true);
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Error al cargar favoritos:', err);
+      }
+
+      // Event listener para botones de favorito
+      document.querySelectorAll('.btn-favorito').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const subastaId = btn.dataset.subastaId;
+
+          try {
+            const resp = await fetch(`/api/usuario/favoritos/${subastaId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+              },
+              credentials: 'include'
+            });
+            const datos = await resp.json();
+            if (datos.exito) {
+              marcarFavorito(btn, datos.datos.favorito);
+            }
+          } catch (err) {
+            console.error('Error al cambiar favorito:', err);
+          }
+        });
+      });
+
+      function marcarFavorito(btn, esFav) {
+        const icono = btn.querySelector('.icono-corazon');
+        if (esFav) {
+          btn.classList.add('bg-[#FEF2F2]', 'border-[#FECACA]');
+          icono.setAttribute('fill', 'currentColor');
+          icono.classList.remove('text-[#ADA69E]');
+          icono.classList.add('text-[#DC2626]');
+        } else {
+          btn.classList.remove('bg-[#FEF2F2]', 'border-[#FECACA]');
+          icono.setAttribute('fill', 'none');
+          icono.classList.remove('text-[#DC2626]');
+          icono.classList.add('text-[#ADA69E]');
+        }
+      }
+    });

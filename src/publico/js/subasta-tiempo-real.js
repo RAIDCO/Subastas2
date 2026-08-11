@@ -348,6 +348,156 @@
         });
     }
 
+    //------------------------------------
+    // CHAT EN TIEMPO REAL
+    //------------------------------------
+
+    const listaChatEl = document.getElementById("lista-chat");
+    const mensajeChatInput = document.getElementById("mensaje-chat");
+    const btnEnviarChat = document.getElementById("btn-enviar-chat");
+
+    const crearElementoMensaje = (msg) => {
+        const div = document.createElement("div");
+        div.className = "flex items-start gap-2.5 mb-3";
+
+        const inicial = msg.usuario ? msg.usuario.charAt(0).toUpperCase() : "?";
+
+        div.innerHTML = `
+            <div class="w-7 h-7 rounded-full bg-[#EFECE6] border border-[#E2DDD5] flex flex-shrink-0 items-center justify-center text-xs font-bold text-[#1A1614]">${inicial}</div>
+            <div class="bg-[#F7F4EF] border border-[#EBE5DC] rounded-2xl px-3.5 py-2 max-w-[85%]">
+                <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-xs font-bold text-[#1A1614]">${msg.usuario || "Anónimo"}</span>
+                    <span class="text-[10px] text-[#8A7F76]">${formatearHora(msg.fecha)}</span>
+                </div>
+                <p class="text-xs text-[#3D3530] leading-relaxed break-words">${msg.mensaje}</p>
+            </div>
+        `;
+
+        return div;
+    };
+
+    socket.on("subasta:historial-chat", (datos) => {
+        if (!listaChatEl) return;
+        listaChatEl.innerHTML = "";
+        if (datos.mensajes && datos.mensajes.length > 0) {
+            datos.mensajes.forEach((msg) => {
+                listaChatEl.appendChild(crearElementoMensaje(msg));
+            });
+            listaChatEl.scrollTop = listaChatEl.scrollHeight;
+        } else {
+            listaChatEl.innerHTML = `
+                <div class="text-center py-8 text-[#8A7F76] text-xs">
+                    No hay mensajes en el chat todavía. ¡Sé el primero en escribir!
+                </div>
+            `;
+        }
+    });
+
+    socket.on("subasta:nuevo-mensaje", (msg) => {
+        if (!listaChatEl) return;
+        const estadoVacio = listaChatEl.querySelector(".text-center");
+        if (estadoVacio) estadoVacio.remove();
+
+        listaChatEl.appendChild(crearElementoMensaje(msg));
+        listaChatEl.scrollTop = listaChatEl.scrollHeight;
+    });
+
+    if (btnEnviarChat && mensajeChatInput) {
+        const enviarMensaje = () => {
+            const texto = mensajeChatInput.value.trim();
+            if (!texto) return;
+
+            const token = localStorage.getItem("token");
+            socket.emit("subasta:enviar-mensaje", {
+                subastaId,
+                mensaje: texto,
+                token
+            });
+
+            mensajeChatInput.value = "";
+        };
+
+        btnEnviarChat.addEventListener("click", enviarMensaje);
+        mensajeChatInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                enviarMensaje();
+            }
+        });
+    }
+
+    // Tab Switching: Pujas vs Chat
+    const tabPujasBtn = document.getElementById("tab-pujas-btn");
+    const tabChatBtn = document.getElementById("tab-chat-btn");
+    const panelPujas = document.getElementById("panel-pujas");
+    const panelChat = document.getElementById("panel-chat");
+
+    if (tabPujasBtn && tabChatBtn && panelPujas && panelChat) {
+        tabPujasBtn.addEventListener("click", () => {
+            panelPujas.classList.remove("hidden");
+            panelChat.classList.add("hidden");
+            tabPujasBtn.classList.add("border-[#D97706]", "text-[#D97706]");
+            tabPujasBtn.classList.remove("border-transparent", "text-[#8A7F76]");
+            tabChatBtn.classList.remove("border-[#D97706]", "text-[#D97706]");
+            tabChatBtn.classList.add("border-transparent", "text-[#8A7F76]");
+        });
+
+        tabChatBtn.addEventListener("click", () => {
+            panelChat.classList.remove("hidden");
+            panelPujas.classList.add("hidden");
+            tabChatBtn.classList.add("border-[#D97706]", "text-[#D97706]");
+            tabChatBtn.classList.remove("border-transparent", "text-[#8A7F76]");
+            tabPujasBtn.classList.remove("border-[#D97706]", "text-[#D97706]");
+            tabPujasBtn.classList.add("border-transparent", "text-[#8A7F76]");
+            if (listaChatEl) listaChatEl.scrollTop = listaChatEl.scrollHeight;
+        });
+    }
+
+    //------------------------------------
+    // AUTO-PUJA
+    //------------------------------------
+
+    const montoAutoInput = document.getElementById("monto-auto-puja");
+    const btnActivarAuto = document.getElementById("btn-activar-auto");
+    const btnCancelarAuto = document.getElementById("btn-cancelar-auto");
+    const infoAutoEstado = document.getElementById("info-auto-estado");
+
+    socket.on("subasta:auto-puja-confirmado", (datos) => {
+        if (infoAutoEstado) {
+            infoAutoEstado.textContent = datos.mensaje;
+            infoAutoEstado.classList.remove("hidden");
+        }
+    });
+
+    socket.on("subasta:auto-puja-cancelado", () => {
+        if (infoAutoEstado) {
+            infoAutoEstado.textContent = "";
+            infoAutoEstado.classList.add("hidden");
+        }
+    });
+
+    if (btnActivarAuto && montoAutoInput) {
+        btnActivarAuto.addEventListener("click", () => {
+            const max = Number(montoAutoInput.value);
+            const token = localStorage.getItem("token");
+            if (!max || max <= 0) return;
+
+            socket.emit("subasta:auto-puja", {
+                subastaId,
+                montoMaximo: max,
+                token
+            });
+            montoAutoInput.value = "";
+        });
+    }
+
+    if (btnCancelarAuto) {
+        btnCancelarAuto.addEventListener("click", () => {
+            const token = localStorage.getItem("token");
+            socket.emit("subasta:cancelar-auto-puja", { subastaId, token });
+        });
+    }
+
     //====================================
     // LIMPIEZA AL SALIR DE LA PÁGINA
     //====================================

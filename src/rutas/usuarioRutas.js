@@ -6,7 +6,9 @@ const router = express.Router();
 const {
     mostrarVistaPerfil,
     obtenerPerfil,
-    actualizarPerfil
+    actualizarPerfil,
+    toggleFavorito,
+    obtenerFavoritos
 } = require("../controladores/usuarioControlador");
 
 const {
@@ -22,5 +24,11 @@ router.get("/api/usuario/perfil", verificarAutenticacion, obtenerPerfil);
 
 // PUT /api/usuario/perfil -> procesa la actualización de datos
 router.put("/api/usuario/perfil", verificarAutenticacion, actualizarPerfil);
+
+// POST /api/usuario/favoritos/:subastaId -> toggle favorito (añadir/quitar)
+router.post("/api/usuario/favoritos/:subastaId", verificarAutenticacion, toggleFavorito);
+
+// GET /api/usuario/favoritos -> obtiene los IDs de subastas favoritas
+router.get("/api/usuario/favoritos", verificarAutenticacion, obtenerFavoritos);
 
 module.exports = router;

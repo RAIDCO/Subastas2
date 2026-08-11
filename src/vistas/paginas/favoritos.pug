@@ -1,0 +1,116 @@
+extends ../disenos/autenticado.pug
+
+block contenido
+  -
+    const formatearMonto = (valor) => {
+      if (valor === null || valor === undefined) return '—';
+      return '$' + Number(valor).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+  div(class="mb-8 anim-fade-up")
+    h1(class="text-2xl font-bold text-[#1A1614]") Mis Favoritos
+    p(class="text-[#8A7F76] mt-1 text-sm") Las subastas que guardaste para seguir de cerca.
+
+  if favoritos && favoritos.length > 0
+    div(class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6")
+      each subasta, index in favoritos
+        div(class=`relative anim-fade-up anim-fade-up-${Math.min(index + 1, 6)}`)
+          //- Botón quitar de favoritos
+          button(
+            type="button"
+            data-subasta-id=subasta.id
+            class="btn-favorito absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm border border-[#FECACA] flex items-center justify-center hover:bg-[#FEF2F2] transition-all shadow-md"
+            title="Quitar de favoritos"
+          )
+            svg(class="w-5 h-5 text-[#DC2626]" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1")
+              path(stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z")
+
+          a(href=`/subastas/${subasta.id}` class="block group")
+            article(class="bg-white border border-[#E2DDD5] rounded-[16px] overflow-hidden card-interactive shadow-card flex flex-col h-full")
+
+              //- Imagen del artículo
+              div(class="relative h-56 overflow-hidden bg-[#EFECE6]")
+                if subasta.imagen_url
+                  img(src=subasta.imagen_url alt=subasta.titulo class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500")
+                else
+                  div(class="w-full h-full flex items-center justify-center text-[#E2DDD5]")
+                    svg(class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+                      path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z")
+
+                //- Badge de categoría
+                if subasta.categoria
+                  div(class="absolute top-3 left-3 bg-[#FFF7ED]/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-[#C2410C] border border-[#FFEDD5]")
+                    = subasta.categoria.nombre || 'General'
+
+              //- Info de la subasta
+              div(class="p-5 flex flex-col flex-grow")
+                h3(class="text-base font-bold text-[#1A1614] mb-1 group-hover:text-[#D97706] transition-colors line-clamp-1")= subasta.titulo
+                if subasta.vendedor
+                  p(class="text-[#ADA69E] text-xs mb-4")= `Publicado por ${subasta.vendedor.nombre}`
+
+                //- Precio
+                div(class="mt-auto flex items-center justify-between pt-4 border-t border-[#EBE5DC]")
+                  div
+                    span(class="text-xs text-[#8A7F76] block") Puja actual
+                    span(class="text-lg font-extrabold text-[#D97706]")= formatearMonto(subasta.precio_actual)
+                  div
+                    - const est = subasta.estado
+                    if est === 'activa'
+                      span(class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]")
+                        span(class="w-1.5 h-1.5 rounded-full bg-[#059669] dot-live")
+                        span EN VIVO
+                    else if est === 'finalizada'
+                      span(class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-[#EFECE6] text-[#8A7F76] border border-[#E2DDD5]") FINALIZADA
+
+  else
+    //- Estado vacío
+    div(class="bg-white border border-[#E2DDD5] rounded-[16px] text-center py-20 px-6 max-w-lg mx-auto my-8 shadow-card anim-fade-up")
+      div(class="mx-auto w-20 h-20 rounded-2xl bg-[#FEF2F2] border border-[#FECACA] flex items-center justify-center mb-6")
+        svg(class="w-10 h-10 text-[#F87171]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5")
+          path(stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z")
+
+      h3(class="text-xl font-bold text-[#1A1614] mb-2") No tienes favoritos aún
+      p(class="text-[#8A7F76] text-sm mb-6") Explora el catálogo y guarda las subastas que más te interesen para seguirlas de cerca.
+      a(href="/subastas" class="bg-[#D97706] hover:bg-[#B45309] text-white font-semibold text-sm px-6 py-3 rounded-[10px] transition-colors shadow-btn inline-block") Explorar Subastas
+
+block scripts
+  script.
+    // Toggle favorito desde la página de favoritos (quitar)
+    document.querySelectorAll('.btn-favorito').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const subastaId = btn.dataset.subastaId;
+        const token = localStorage.getItem('token');
+
+        try {
+          const resp = await fetch(`/api/usuario/favoritos/${subastaId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: 'Bearer ' + token } : {})
+            },
+            credentials: 'include'
+          });
+
+          const datos = await resp.json();
+          if (datos.exito && !datos.datos.favorito) {
+            // Removido — animar y quitar el card
+            const card = btn.closest('.relative');
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => card.remove(), 300);
+
+            // Si no quedan cards, recargar para mostrar estado vacío
+            setTimeout(() => {
+              if (document.querySelectorAll('.btn-favorito').length === 0) {
+                window.location.reload();
+              }
+            }, 350);
+          }
+        } catch (err) {
+          console.error('Error al quitar favorito:', err);
+        }
+      });
+    });

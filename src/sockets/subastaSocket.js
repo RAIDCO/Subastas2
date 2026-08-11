@@ -1,4 +1,4 @@
-const { Subasta, Puja, Usuario } = require("../modelos");
+const { Subasta, Puja, Usuario, AutoPuja, MensajeChat } = require("../modelos");
 const { verificarToken } = require("../utilidades/tokenJwt");
 const { obtenerEstadoEfectivo } = require("../utilidades/fechas");
 const {
@@ -6,6 +6,7 @@ const {
     reiniciarTemporizador,
     obtenerTiempoRestante
 } = require("../servicios/temporizadorSubastaServicio");
+const { procesarAutoPujas } = require("../servicios/autoPujaServicio");
 
 //====================================
 // VALIDAR TOKEN JWT DESDE EL SOCKET
@@ -100,6 +101,24 @@ const configurarSockets = (io) => {
                     }))
                 });
 
+                // Enviar historial de chat al cliente
+                const mensajesChat = await MensajeChat.findAll({
+                    where: { subasta_id: subastaId },
+                    include: [{ model: Usuario, as: "usuario", attributes: ["id", "nombre"] }],
+                    order: [["created_at", "ASC"]],
+                    limit: 50
+                });
+
+                socket.emit("subasta:historial-chat", {
+                    mensajes: mensajesChat.map((m) => ({
+                        id: m.id,
+                        mensaje: m.mensaje,
+                        usuario: m.usuario ? m.usuario.nombre : "Anónimo",
+                        usuarioId: m.usuario_id,
+                        fecha: m.created_at
+                    }))
+                });
+
             } catch (error) {
                 console.error("[Socket.io] Error al unirse:", error.message);
                 socket.emit("subasta:error", { mensaje: "Error al cargar la subasta." });
@@ -189,9 +208,131 @@ const configurarSockets = (io) => {
 
                 console.log(`[Socket.io] Puja de $${montoNumerico} en subasta ${subastaId} por ${usuario ? usuario.nombre : contenidoToken.id}`);
 
+                // 11. Procesar auto-pujas de competidores
+                setTimeout(() => procesarAutoPujas(subastaId, io), 300);
+
             } catch (error) {
                 console.error("[Socket.io] Error al pujar:", error.message);
                 socket.emit("subasta:error", { mensaje: "Error al procesar tu puja." });
+            }
+        });
+
+        //------------------------------------
+        // CONFIGURAR / CANCELAR AUTO-PUJA
+        //------------------------------------
+
+        socket.on("subasta:auto-puja", async ({ subastaId, montoMaximo, token }) => {
+            const contenidoToken = autenticarSocket(token);
+            if (!contenidoToken) {
+                return socket.emit("subasta:error", { mensaje: "Debes iniciar sesión para activar auto-puja." });
+            }
+
+            const maxNum = Number(montoMaximo);
+            if (!maxNum || maxNum <= 0) {
+                return socket.emit("subasta:error", { mensaje: "El monto máximo de auto-puja no es válido." });
+            }
+
+            try {
+                const subasta = await Subasta.findByPk(subastaId);
+                if (!subasta || subasta.estado !== "activa") {
+                    return socket.emit("subasta:error", { mensaje: "La subasta no está activa." });
+                }
+
+                if (subasta.usuario_id === contenidoToken.id) {
+                    return socket.emit("subasta:error", { mensaje: "No puedes auto-pujar en tu propia subasta." });
+                }
+
+                const precioActual = Number(subasta.precio_actual);
+                const pujaMinima = Math.round(precioActual * 1.05 * 100) / 100;
+
+                if (maxNum < pujaMinima) {
+                    return socket.emit("subasta:error", {
+                        mensaje: `El monto máximo ($${maxNum.toFixed(2)}) debe ser al menos de $${pujaMinima.toFixed(2)}.`
+                    });
+                }
+
+                // Crear o actualizar AutoPuja
+                const [autoPujaRecord] = await AutoPuja.upsert({
+                    usuario_id: contenidoToken.id,
+                    subasta_id: subastaId,
+                    monto_maximo: maxNum,
+                    activo: true
+                });
+
+                socket.emit("subasta:auto-puja-confirmado", {
+                    subastaId,
+                    montoMaximo: maxNum,
+                    mensaje: `Auto-puja activa hasta $${maxNum.toFixed(2)}`
+                });
+
+                // Procesar auto-pujas de inmediato por si el nuevo máximo altera el liderazgo
+                await procesarAutoPujas(subastaId, io);
+
+            } catch (error) {
+                console.error("[Socket.io] Error al configurar auto-puja:", error.message);
+                socket.emit("subasta:error", { mensaje: "Error al activar la auto-puja." });
+            }
+        });
+
+        socket.on("subasta:cancelar-auto-puja", async ({ subastaId, token }) => {
+            const contenidoToken = autenticarSocket(token);
+            if (!contenidoToken) return;
+
+            try {
+                await AutoPuja.update(
+                    { activo: false },
+                    { where: { usuario_id: contenidoToken.id, subasta_id: subastaId } }
+                );
+                socket.emit("subasta:auto-puja-cancelado", { mensaje: "Auto-puja desactivada." });
+            } catch (error) {
+                console.error("[Socket.io] Error al cancelar auto-puja:", error.message);
+            }
+        });
+
+        //------------------------------------
+        // CHAT EN TIEMPO REAL
+        //------------------------------------
+
+        socket.on("subasta:enviar-mensaje", async ({ subastaId, mensaje, token }) => {
+            const contenidoToken = autenticarSocket(token);
+            if (!contenidoToken) {
+                return socket.emit("subasta:error", { mensaje: "Debes iniciar sesión para chatear." });
+            }
+
+            const textoLimpio = String(mensaje || "").trim();
+            if (!textoLimpio || textoLimpio.length > 500) {
+                return socket.emit("subasta:error", { mensaje: "El mensaje no puede estar vacío ni superar los 500 caracteres." });
+            }
+
+            try {
+                const subasta = await Subasta.findByPk(subastaId);
+                if (!subasta) {
+                    return socket.emit("subasta:error", { mensaje: "Subasta no encontrada." });
+                }
+
+                const nuevoMensaje = await MensajeChat.create({
+                    subasta_id: subastaId,
+                    usuario_id: contenidoToken.id,
+                    mensaje: textoLimpio
+                });
+
+                const usuario = await Usuario.findByPk(contenidoToken.id, {
+                    attributes: ["id", "nombre"]
+                });
+
+                const datosMensaje = {
+                    id: nuevoMensaje.id,
+                    mensaje: textoLimpio,
+                    usuario: usuario ? usuario.nombre : "Anónimo",
+                    usuarioId: contenidoToken.id,
+                    fecha: nuevoMensaje.created_at
+                };
+
+                io.to(`subasta:${subastaId}`).emit("subasta:nuevo-mensaje", datosMensaje);
+
+            } catch (error) {
+                console.error("[Socket.io] Error al enviar mensaje:", error.message);
+                socket.emit("subasta:error", { mensaje: "Error al enviar el mensaje." });
             }
         });
 

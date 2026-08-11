@@ -82,9 +82,11 @@ html(lang="es")
           label(class="block text-[#1A1614] mb-2 text-sm font-medium") Confirmar contraseña
           input(type="password" id="confirmarClave" name="confirmarClave" placeholder="••••••••" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
 
-        label(class="flex items-center gap-2 text-[#8A7F76] text-sm cursor-pointer")
-          input(type="checkbox" required class="rounded border-[#E2DDD5] bg-[#EFECE6] text-[#D97706] focus:ring-[#FDE68A]")
-          | Acepto los términos y condiciones
+        div(class="flex items-center gap-2 text-[#8A7F76] text-xs cursor-pointer")
+          input(type="checkbox" required id="check-terminos" class="rounded border-[#E2DDD5] bg-[#EFECE6] text-[#D97706] focus:ring-[#FDE68A]")
+          label(for="check-terminos" class="cursor-pointer")
+            | Acepto los
+            button(type="button" id="btn-abrir-terminos" class="text-[#D97706] hover:underline font-medium ml-1 inline-block") términos y condiciones
 
         button(type="submit" id="btn-solicitar-codigo" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-3 rounded-[10px] transition-colors shadow-btn")
           | Enviar Código a mi Gmail
@@ -109,6 +111,36 @@ html(lang="es")
         | ¿Ya tienes cuenta?
         a(href="/iniciar-sesion" class="text-[#D97706] ml-1 hover:underline font-medium") Inicia sesión
 
+    //- MODAL TÉRMINOS Y CONDICIONES
+    div(id="modal-terminos" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4")
+      div(class="w-full max-w-lg bg-white border border-[#E2DDD5] rounded-[16px] shadow-2xl p-6 relative max-h-[85vh] flex flex-col anim-fade-up")
+
+        div(class="flex items-center justify-between border-b border-[#EBE5DC] pb-4 mb-4")
+          h2(class="text-lg font-bold text-[#1A1614]") Términos y Condiciones de Uso
+          button(type="button" id="btn-cerrar-terminos" class="text-[#8A7F76] hover:text-[#1A1614] transition-colors p-1")
+            svg(class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+              path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12")
+
+        div(class="flex-1 overflow-y-auto space-y-4 pr-1 text-xs text-[#3D3530] leading-relaxed")
+          div
+            h3(class="font-bold text-[#1A1614] text-sm mb-1") 1. Registro y Verificación de Cuenta
+            p Al registrarte en SubastasPro, declaras que los datos proporcionados son verídicos. Para garantizar la seguridad de la comunidad, exigimos la verificación mediante correo Gmail auténtico.
+
+          div
+            h3(class="font-bold text-[#1A1614] text-sm mb-1") 2. Pujas y Compromiso de Compra
+            p Toda puja realizada en una subasta activa es firme y vinculante. Si tu puja resulta ganadora al cierre de la subasta, asumes la responsabilidad legal de adquirir el artículo al precio final registrado.
+
+          div
+            h3(class="font-bold text-[#1A1614] text-sm mb-1") 3. Publicaciones y Moderación
+            p Las subastas publicadas por los usuarios están sujetas a revisión previa por administradores antes de ser visibles en el catálogo. Queda prohibida la publicación de artículos ilícitos o con imágenes engañosas.
+
+          div
+            h3(class="font-bold text-[#1A1614] text-sm mb-1") 4. Juego Limpio y Prohibición de Manipulación
+            p Se prohíbe terminantemente la creación de cuentas múltiples o el uso de auto-pujas fraudulentas para elevar artificialmente el precio de una subasta propia. Las cuentas que incurran en estas prácticas serán suspendidas permanentemente.
+
+        div(class="border-t border-[#EBE5DC] pt-4 mt-4 flex justify-end")
+          button(type="button" id="btn-aceptar-terminos-modal" class="bg-[#D97706] hover:bg-[#B45309] text-white font-semibold text-xs px-5 py-2.5 rounded-[10px] transition-colors shadow-btn") Entendido y Aceptar
+
     script.
       const formPaso1 = document.getElementById('form-paso-1');
       const formPaso2 = document.getElementById('form-paso-2');
@@ -124,6 +156,30 @@ html(lang="es")
       const btnVolver = document.getElementById('btn-volver');
       const btnReenviar = document.getElementById('btn-reenviar');
       const contadorReenvioSpan = document.getElementById('contador-reenvio');
+
+      // Modal Términos y Condiciones
+      const modalTerminos = document.getElementById('modal-terminos');
+      const btnAbrirTerminos = document.getElementById('btn-abrir-terminos');
+      const btnCerrarTerminos = document.getElementById('btn-cerrar-terminos');
+      const btnAceptarTerminosModal = document.getElementById('btn-aceptar-terminos-modal');
+      const checkTerminos = document.getElementById('check-terminos');
+
+      if (btnAbrirTerminos && modalTerminos) {
+        btnAbrirTerminos.addEventListener('click', (e) => {
+          e.preventDefault();
+          modalTerminos.classList.remove('hidden');
+        });
+        btnCerrarTerminos.addEventListener('click', () => {
+          modalTerminos.classList.add('hidden');
+        });
+        btnAceptarTerminosModal.addEventListener('click', () => {
+          modalTerminos.classList.add('hidden');
+          if (checkTerminos) checkTerminos.checked = true;
+        });
+        modalTerminos.addEventListener('click', (e) => {
+          if (e.target === modalTerminos) modalTerminos.classList.add('hidden');
+        });
+      }
 
       let contadorSegundos = 60;
       let intervaloContador = null;

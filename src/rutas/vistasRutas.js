@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { Subasta, Usuario, Categoria } = require('../modelos');
+const { Subasta, Usuario, Categoria, Favorito } = require('../modelos');
 
 const { requiereSesionVista, cargarUsuarioSiExiste, requiereAdminVista } = require('../intermediarios/autenticacionIntermediario');
 const { obtenerHistorialUsuario } = require('../controladores/usuarioControlador');
@@ -61,8 +61,15 @@ router.get('/', cargarUsuarioSiExiste, async (req, res) => {
 // Catálogo de subastas (con búsqueda, filtros por categoría/estado y ordenación)
 router.get('/subastas', cargarUsuarioSiExiste, async (req, res) => {
   try {
-    const { buscar, categoria, estado, orden } = req.query;
+    const { buscar, categoria, estado, orden, precioMin, precioMax } = req.query;
     const estadoFiltro = estado || 'activa';
+
+    // Obtener todas las categorías registradas en la base de datos
+    const categoriasBD = await Categoria.findAll({
+      attributes: ['nombre'],
+      order: [['nombre', 'ASC']]
+    });
+    const listaCategorias = ['Todas', ...new Set(categoriasBD.map(c => c.nombre))];
 
     // Solo se consultan subastas que hayan sido aprobadas (estado 'activa' o 'finalizada' en BD)
     const subastas = await Subasta.findAll({
@@ -149,16 +156,27 @@ router.get('/subastas', cargarUsuarioSiExiste, async (req, res) => {
       subastasFiltradas = subastasFormateadas.filter((s) => s.estadoEfectivo === 'activa');
     }
 
+    // Filtrado por rango de precio
+    if (precioMin && !isNaN(Number(precioMin))) {
+      subastasFiltradas = subastasFiltradas.filter(s => s.precio_actual >= Number(precioMin));
+    }
+    if (precioMax && !isNaN(Number(precioMax))) {
+      subastasFiltradas = subastasFiltradas.filter(s => s.precio_actual <= Number(precioMax));
+    }
+
     res.render('paginas/subastas', {
       titulo: 'Subastas - SubastasPro',
       paginaActual: 'subastas',
       subastas: subastasFiltradas,
+      categorias: listaCategorias,
       usuario: req.usuario || null,
       buscar: buscar || '',
       categoriaSel: categoria || 'Todas',
       estadoSel: estadoFiltro,
       ordenSel: orden || 'recientes',
-      busquedaActual: buscar || ''
+      busquedaActual: buscar || '',
+      precioMin: precioMin || '',
+      precioMax: precioMax || ''
     });
   } catch (error) {
     console.error('Error al cargar catálogo de subastas:', error.message);
@@ -171,7 +189,9 @@ router.get('/subastas', cargarUsuarioSiExiste, async (req, res) => {
       categoriaSel: req.query.categoria || 'Todas',
       estadoSel: req.query.estado || 'activa',
       ordenSel: req.query.orden || 'recientes',
-      busquedaActual: req.query.buscar || ''
+      busquedaActual: req.query.buscar || '',
+      precioMin: req.query.precioMin || '',
+      precioMax: req.query.precioMax || ''
     });
   }
 });
@@ -185,6 +205,50 @@ router.get('/crear-subasta', requiereSesionVista, mostrarFormularioCrear);
 // Historial de subastas (ruta protegida: sin sesión redirige al login)
 router.get('/historial', requiereSesionVista, obtenerHistorialUsuario);
 
+// Favoritos del usuario (ruta protegida)
+router.get('/favoritos', requiereSesionVista, async (req, res) => {
+  try {
+    const favoritos = await Favorito.findAll({
+      where: { usuario_id: req.usuario.id },
+      include: [{
+        model: Subasta,
+        as: 'subasta',
+        include: [
+          { model: Usuario, as: 'vendedor', attributes: ['id', 'nombre'] },
+          { model: Categoria, as: 'categoria', attributes: ['id', 'nombre'] }
+        ]
+      }],
+      order: [['created_at', 'DESC']]
+    });
+
+    const subastasFormateadas = favoritos
+      .filter(f => f.subasta)
+      .map(f => ({
+        id: f.subasta.id,
+        titulo: f.subasta.titulo,
+        imagen_url: f.subasta.imagen_url,
+        precio_actual: Number(f.subasta.precio_actual),
+        estado: f.subasta.estado,
+        vendedor: f.subasta.vendedor,
+        categoria: f.subasta.categoria
+      }));
+
+    res.render('paginas/favoritos', {
+      titulo: 'Mis Favoritos - SubastasPro',
+      paginaActual: 'favoritos',
+      usuario: req.usuario,
+      favoritos: subastasFormateadas
+    });
+  } catch (error) {
+    console.error('Error al cargar favoritos:', error.message);
+    res.render('paginas/favoritos', {
+      titulo: 'Mis Favoritos - SubastasPro',
+      paginaActual: 'favoritos',
+      usuario: req.usuario,
+      favoritos: []
+    });
+  }
+});
 // Panel de administración (moderación de subastas pendientes)
 router.get('/admin', requiereSesionVista, requiereAdminVista, async (req, res) => {
   try {

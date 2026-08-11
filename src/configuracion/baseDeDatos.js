@@ -45,6 +45,9 @@ const testConnection = async () => {
     try {
         await sequelize.authenticate();
         console.log("✅ Conexión a Supabase establecida correctamente.");
+        await sequelize.query(`
+            ALTER TABLE subastas ADD COLUMN IF NOT EXISTS imagenes_urls JSONB DEFAULT '[]'::jsonb;
+        `).catch(() => {});
         await sequelize.sync();
         console.log("✅ Tablas de la base de datos sincronizadas.");
     } catch (error) {

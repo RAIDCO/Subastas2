@@ -7,6 +7,9 @@ const Puja = require("./pujaModelo");
 const HistorialSubasta = require("./historialSubastaModelo");
 const Auditoria = require("./auditoriaModelo");
 const CodigoVerificacion = require("./codigoVerificacionModelo");
+const Favorito = require("./favoritoModelo");
+const AutoPuja = require("./autoPujaModelo");
+const MensajeChat = require("./mensajeChatModelo");
 
 //====================================
 // RELACIÓN USUARIO - SUBASTA
@@ -84,6 +87,79 @@ Puja.belongsTo(Usuario, {
 });
 
 //====================================
+// RELACIÓN USUARIO - FAVORITO
+// Un usuario puede tener muchos favoritos
+//====================================
+
+Usuario.hasMany(Favorito, {
+    foreignKey: "usuario_id",
+    as: "favoritos"
+});
+
+Favorito.belongsTo(Usuario, {
+    foreignKey: "usuario_id",
+    as: "usuario"
+});
+
+Subasta.hasMany(Favorito, {
+    foreignKey: "subasta_id",
+    as: "favoritos"
+});
+
+Favorito.belongsTo(Subasta, {
+    foreignKey: "subasta_id",
+    as: "subasta"
+});
+
+//====================================
+// RELACIÓN USUARIO - AUTO PUJA
+//====================================
+
+Usuario.hasMany(AutoPuja, {
+    foreignKey: "usuario_id",
+    as: "autoPujas"
+});
+
+AutoPuja.belongsTo(Usuario, {
+    foreignKey: "usuario_id",
+    as: "usuario"
+});
+
+Subasta.hasMany(AutoPuja, {
+    foreignKey: "subasta_id",
+    as: "autoPujas"
+});
+
+AutoPuja.belongsTo(Subasta, {
+    foreignKey: "subasta_id",
+    as: "subasta"
+});
+
+//====================================
+// RELACIÓN SUBASTA - MENSAJE CHAT
+//====================================
+
+Subasta.hasMany(MensajeChat, {
+    foreignKey: "subasta_id",
+    as: "mensajesChat"
+});
+
+MensajeChat.belongsTo(Subasta, {
+    foreignKey: "subasta_id",
+    as: "subasta"
+});
+
+Usuario.hasMany(MensajeChat, {
+    foreignKey: "usuario_id",
+    as: "mensajesChat"
+});
+
+MensajeChat.belongsTo(Usuario, {
+    foreignKey: "usuario_id",
+    as: "usuario"
+});
+
+//====================================
 // EXPORTAR MODELOS
 //====================================
 
@@ -95,5 +171,8 @@ module.exports = {
     Puja,
     HistorialSubasta,
     Auditoria,
-    CodigoVerificacion
+    CodigoVerificacion,
+    Favorito,
+    AutoPuja,
+    MensajeChat
 };
