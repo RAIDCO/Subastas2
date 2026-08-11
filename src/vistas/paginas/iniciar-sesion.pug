@@ -1,4 +1,4 @@
-//- Formulario de inicio de sesión de usuario
+//- Formulario de inicio de sesión de usuario con recuperación de contraseña mediante OTP
 doctype html
 html(lang="es")
   head
@@ -30,7 +30,7 @@ html(lang="es")
       }
       .anim-fade-up { animation: fadeSlideUp 0.5s ease-out both; }
 
-  body(class="bg-[#F7F4EF] flex items-center justify-center min-h-screen font-sans antialiased")
+  body(class="bg-[#F7F4EF] flex items-center justify-center min-h-screen font-sans antialiased py-10")
 
     div(class="w-full max-w-md bg-white border border-[#E2DDD5] rounded-[16px] shadow-lg p-8 anim-fade-up")
 
@@ -55,7 +55,7 @@ html(lang="es")
       div(id="alerta-exito" class="hidden mb-6 bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-sm p-4 rounded-xl flex items-center gap-2")
         svg(class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7")
-        span ¡Sesión iniciada! Redirigiendo...
+        span(id="mensaje-exito") ¡Sesión iniciada! Redirigiendo...
 
       form(id="form-login" class="space-y-5")
 
@@ -72,7 +72,7 @@ html(lang="es")
             input(type="checkbox" class="rounded border-[#E2DDD5] bg-[#EFECE6] text-[#D97706] focus:ring-[#FDE68A]")
             | Recordarme
 
-          a(href="#" class="text-[#D97706] hover:underline font-medium") ¿Olvidaste tu contraseña?
+          button(type="button" id="btn-abrir-recuperacion" class="text-[#D97706] hover:underline font-medium focus:outline-none") ¿Olvidaste tu contraseña?
 
         button(type="submit" id="btn-submit" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-3 rounded-[10px] transition-colors shadow-btn")
           | Iniciar Sesión
@@ -81,14 +81,272 @@ html(lang="es")
         | ¿No tienes cuenta?
         a(href="/registro" class="text-[#D97706] ml-1 hover:underline font-medium") Regístrate aquí
 
+    //- MODAL RECUPERAR CONTRASEÑA
+    div(id="modal-recuperar" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4")
+      div(class="w-full max-w-md bg-white border border-[#E2DDD5] rounded-[16px] shadow-2xl p-6 relative anim-fade-up")
+
+        button(type="button" id="btn-cerrar-modal" class="absolute top-4 right-4 text-[#8A7F76] hover:text-[#1A1614] transition-colors p-1")
+          svg(class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12")
+
+        h2(class="text-xl font-bold text-[#1A1614] mb-1") Recuperar Contraseña
+        p(id="subtitulo-recuperar" class="text-sm text-[#8A7F76] mb-5") Ingresa tu correo registrado para recibir un código de verificación.
+
+        //- Alerta Modal Error
+        div(id="modal-alerta-error" class="hidden mb-4 bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-xs p-3 rounded-lg flex items-center gap-2")
+          svg(class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
+          span(id="modal-mensaje-error")
+
+        //- Alerta Modal Info
+        div(id="modal-alerta-info" class="hidden mb-4 bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] text-xs p-3 rounded-lg flex items-center gap-2")
+          svg(class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+            path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
+          span(id="modal-mensaje-info")
+
+        //- Paso 1 Recuperar: Enviar Código
+        form(id="form-recuperar-paso-1" class="space-y-4")
+          div
+            label(class="block text-[#1A1614] mb-1.5 text-xs font-medium") Correo electrónico registrado
+            input(type="email" id="recuperar-correo" placeholder="tu@correo.com" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-sm text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+
+          button(type="submit" id="btn-solicitar-recuperacion" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-2.5 rounded-[10px] text-sm transition-colors shadow-btn")
+            | Enviar Código de Recuperación
+
+        //- Paso 2 Recuperar: Código + Nueva Contraseña (Oculto inicialmente)
+        form(id="form-recuperar-paso-2" class="hidden space-y-4")
+          div
+            label(class="block text-[#1A1614] mb-1 text-xs font-medium text-center") Código de verificación (6 dígitos)
+            input(type="text" id="recuperar-codigo" placeholder="123456" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-center font-mono text-xl tracking-[0.3em] text-[#D97706] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] transition-all")
+
+          div
+            label(class="block text-[#1A1614] mb-1 text-xs font-medium") Nueva contraseña
+            input(type="password" id="recuperar-nueva-clave" placeholder="••••••••" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-2.5 text-sm text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] transition-all")
+
+          div
+            label(class="block text-[#1A1614] mb-1 text-xs font-medium") Confirmar nueva contraseña
+            input(type="password" id="recuperar-confirmar-clave" placeholder="••••••••" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-2.5 text-sm text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] transition-all")
+
+          button(type="submit" id="btn-restablecer-clave" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-2.5 rounded-[10px] text-sm transition-colors shadow-btn")
+            | Restablecer Contraseña
+
+          div(class="flex items-center justify-between text-xs text-[#8A7F76] pt-1")
+            button(type="button" id="btn-recuperar-volver" class="hover:text-[#1A1614] transition-colors")
+              | ← Cambiar correo
+            button(type="button" id="btn-recuperar-reenviar" disabled class="disabled:opacity-50 hover:text-[#D97706] transition-colors text-[#D97706] font-medium")
+              | Reenviar código (<span id="contador-recuperacion">60</span>s)
+
     script.
-      const form = document.getElementById('form-login');
+      const formLogin = document.getElementById('form-login');
       const alertaError = document.getElementById('alerta-error');
       const mensajeError = document.getElementById('mensaje-error');
       const alertaExito = document.getElementById('alerta-exito');
+      const mensajeExito = document.getElementById('mensaje-exito');
       const btnSubmit = document.getElementById('btn-submit');
 
-      form.addEventListener('submit', async (e) => {
+      // Elementos Modal Recuperar
+      const modalRecuperar = document.getElementById('modal-recuperar');
+      const btnAbrirRecuperacion = document.getElementById('btn-abrir-recuperacion');
+      const btnCerrarModal = document.getElementById('btn-cerrar-modal');
+      const subtituloRecuperar = document.getElementById('subtitulo-recuperar');
+      const modalAlertaError = document.getElementById('modal-alerta-error');
+      const modalMensajeError = document.getElementById('modal-mensaje-error');
+      const modalAlertaInfo = document.getElementById('modal-alerta-info');
+      const modalMensajeInfo = document.getElementById('modal-mensaje-info');
+
+      const formRecuperarPaso1 = document.getElementById('form-recuperar-paso-1');
+      const formRecuperarPaso2 = document.getElementById('form-recuperar-paso-2');
+      const btnSolicitarRecuperacion = document.getElementById('btn-solicitar-recuperacion');
+      const btnRestablecerClave = document.getElementById('btn-restablecer-clave');
+      const btnRecuperarVolver = document.getElementById('btn-recuperar-volver');
+      const btnRecuperarReenviar = document.getElementById('btn-recuperar-reenviar');
+      const contadorRecuperacionSpan = document.getElementById('contador-recuperacion');
+
+      let contadorSegundosRecuperacion = 60;
+      let intervaloRecuperacion = null;
+
+      function ocultarModalAlertas() {
+        modalAlertaError.classList.add('hidden');
+        modalAlertaInfo.classList.add('hidden');
+      }
+
+      function mostrarModalError(msg) {
+        ocultarModalAlertas();
+        modalMensajeError.textContent = msg;
+        modalAlertaError.classList.remove('hidden');
+      }
+
+      function mostrarModalInfo(msg) {
+        ocultarModalAlertas();
+        modalMensajeInfo.textContent = msg;
+        modalAlertaInfo.classList.remove('hidden');
+      }
+
+      function iniciarContadorRecuperacion() {
+        contadorSegundosRecuperacion = 60;
+        btnRecuperarReenviar.disabled = true;
+        contadorRecuperacionSpan.textContent = contadorSegundosRecuperacion;
+        if (intervaloRecuperacion) clearInterval(intervaloRecuperacion);
+
+        intervaloRecuperacion = setInterval(() => {
+          contadorSegundosRecuperacion--;
+          contadorRecuperacionSpan.textContent = contadorSegundosRecuperacion;
+          if (contadorSegundosRecuperacion <= 0) {
+            clearInterval(intervaloRecuperacion);
+            btnRecuperarReenviar.disabled = false;
+            btnRecuperarReenviar.innerHTML = 'Reenviar código';
+          }
+        }, 1000);
+      }
+
+      // Abrir / Cerrar Modal
+      btnAbrirRecuperacion.addEventListener('click', () => {
+        const correoActual = document.getElementById('correo').value.trim();
+        if (correoActual) {
+          document.getElementById('recuperar-correo').value = correoActual;
+        }
+        ocultarModalAlertas();
+        formRecuperarPaso2.classList.add('hidden');
+        formRecuperarPaso1.classList.remove('hidden');
+        subtituloRecuperar.textContent = 'Ingresa tu correo registrado para recibir un código de verificación.';
+        modalRecuperar.classList.remove('hidden');
+      });
+
+      btnCerrarModal.addEventListener('click', () => {
+        modalRecuperar.classList.add('hidden');
+      });
+
+      modalRecuperar.addEventListener('click', (e) => {
+        if (e.target === modalRecuperar) modalRecuperar.classList.add('hidden');
+      });
+
+      // Paso 1 Recuperación: Solicitar Código
+      formRecuperarPaso1.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        ocultarModalAlertas();
+
+        const correo = document.getElementById('recuperar-correo').value.trim().toLowerCase();
+
+        btnSolicitarRecuperacion.disabled = true;
+        btnSolicitarRecuperacion.textContent = 'Enviando código...';
+
+        try {
+          const respuesta = await fetch('/api/autenticacion/solicitar-recuperacion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo })
+          });
+
+          const datos = await respuesta.json();
+
+          if (datos.exito) {
+            formRecuperarPaso1.classList.add('hidden');
+            formRecuperarPaso2.classList.remove('hidden');
+            subtituloRecuperar.textContent = 'Ingresa el código enviado a tu correo y tu nueva contraseña.';
+            mostrarModalInfo(`Código enviado a ${correo}. Revisa tu bandeja de entrada.`);
+            iniciarContadorRecuperacion();
+            document.getElementById('recuperar-codigo').focus();
+          } else {
+            mostrarModalError(datos.mensaje || 'No se pudo enviar el código de recuperación.');
+          }
+        } catch (err) {
+          mostrarModalError('Error de conexión con el servidor.');
+        } finally {
+          btnSolicitarRecuperacion.disabled = false;
+          btnSolicitarRecuperacion.textContent = 'Enviar Código de Recuperación';
+        }
+      });
+
+      // Volver a Paso 1 Modal
+      btnRecuperarVolver.addEventListener('click', () => {
+        ocultarModalAlertas();
+        formRecuperarPaso2.classList.add('hidden');
+        formRecuperarPaso1.classList.remove('hidden');
+        subtituloRecuperar.textContent = 'Ingresa tu correo registrado para recibir un código de verificación.';
+      });
+
+      // Reenviar Código Recuperación
+      btnRecuperarReenviar.addEventListener('click', async () => {
+        const correo = document.getElementById('recuperar-correo').value.trim().toLowerCase();
+        btnRecuperarReenviar.disabled = true;
+
+        try {
+          const respuesta = await fetch('/api/autenticacion/solicitar-recuperacion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo })
+          });
+
+          const datos = await respuesta.json();
+
+          if (datos.exito) {
+            mostrarModalInfo(`Nuevo código de recuperación enviado a ${correo}.`);
+            iniciarContadorRecuperacion();
+          } else {
+            mostrarModalError(datos.mensaje || 'Error al reenviar el código.');
+            btnRecuperarReenviar.disabled = false;
+          }
+        } catch (err) {
+          mostrarModalError('Error de conexión con el servidor.');
+          btnRecuperarReenviar.disabled = false;
+        }
+      });
+
+      // Paso 2 Recuperación: Restablecer Contraseña
+      formRecuperarPaso2.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        ocultarModalAlertas();
+
+        const correo = document.getElementById('recuperar-correo').value.trim().toLowerCase();
+        const codigo = document.getElementById('recuperar-codigo').value.trim();
+        const nuevaClave = document.getElementById('recuperar-nueva-clave').value;
+        const confirmarClave = document.getElementById('recuperar-confirmar-clave').value;
+
+        if (codigo.length !== 6) {
+          mostrarModalError('El código debe tener exactamente 6 dígitos.');
+          return;
+        }
+
+        if (nuevaClave !== confirmarClave) {
+          mostrarModalError('Las contraseñas no coinciden.');
+          return;
+        }
+
+        btnRestablecerClave.disabled = true;
+        btnRestablecerClave.textContent = 'Restableciendo...';
+
+        try {
+          const respuesta = await fetch('/api/autenticacion/restablecer-clave', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo, codigo, nuevaClave })
+          });
+
+          const datos = await respuesta.json();
+
+          if (datos.exito) {
+            modalRecuperar.classList.add('hidden');
+            formRecuperarPaso1.reset();
+            formRecuperarPaso2.reset();
+            document.getElementById('correo').value = correo;
+            document.getElementById('clave').value = '';
+            
+            mensajeExito.textContent = '¡Contraseña restablecida correctamente! Ingresa con tu nueva clave.';
+            alertaExito.classList.remove('hidden');
+          } else {
+            mostrarModalError(datos.mensaje || 'Error al restablecer la contraseña.');
+            btnRestablecerClave.disabled = false;
+            btnRestablecerClave.textContent = 'Restablecer Contraseña';
+          }
+        } catch (err) {
+          mostrarModalError('Error de conexión con el servidor.');
+          btnRestablecerClave.disabled = false;
+          btnRestablecerClave.textContent = 'Restablecer Contraseña';
+        }
+      });
+
+      // Formulario de Login
+      formLogin.addEventListener('submit', async (e) => {
         e.preventDefault();
         alertaError.classList.add('hidden');
         alertaExito.classList.add('hidden');
@@ -109,6 +367,7 @@ html(lang="es")
           const datos = await respuesta.json();
 
           if (datos.exito) {
+            mensajeExito.textContent = '¡Sesión iniciada! Redirigiendo...';
             alertaExito.classList.remove('hidden');
             const usuario = datos.datos && datos.datos.usuario ? datos.datos.usuario : null;
 

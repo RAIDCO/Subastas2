@@ -96,7 +96,7 @@ const mostrarFormularioCrear = capturarAsincrono(async (req, res) => {
 //====================================
 
 const crearSubasta = capturarAsincrono(async (req, res) => {
-    const { titulo, descripcion, precio_inicial, tiempo_inactividad_minutos, categoria_id, inicio_delay_minutos, duracion_horas } = req.body;
+    const { titulo, descripcion, precio_inicial, tiempo_inactividad_minutos, categoria_id, inicio_delay_minutos, duracion_horas, imagen_url } = req.body;
 
     // Validaciones básicas
     if (!titulo || !descripcion || !precio_inicial || !categoria_id) {
@@ -131,8 +131,15 @@ const crearSubasta = capturarAsincrono(async (req, res) => {
     const delayMinutos = Number(inicio_delay_minutos) || 0;
     const duracion = Number(duracion_horas) || 24;
 
-    // Imagen subida por multer (si existe)
-    const imagenUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    // Imagen: si se subió un archivo (Cloudinary devuelve URL en req.file.path, multer local devuelve req.file.filename)
+    let fileUrl = null;
+    if (req.file) {
+        fileUrl = (req.file.path && req.file.path.startsWith("http"))
+            ? req.file.path
+            : (req.file.filename ? `/uploads/${req.file.filename}` : req.file.path);
+    }
+    const webUrl = imagen_url ? String(imagen_url).trim() : "";
+    const imagenFinal = fileUrl || (webUrl !== "" ? webUrl : null);
 
     // Fechas provisionales (se recalculan al aprobar la subasta)
     const fechaInicio = new Date(Date.now() + delayMinutos * 60 * 1000);
@@ -141,7 +148,7 @@ const crearSubasta = capturarAsincrono(async (req, res) => {
     const nuevaSubasta = await Subasta.create({
         titulo: tituloLimpio,
         descripcion: String(descripcion).trim(),
-        imagen_url: imagenUrl,
+        imagen_url: imagenFinal,
         precio_inicial: precioNum,
         precio_actual: precioNum,
         estado: "pendiente",

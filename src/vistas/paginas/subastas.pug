@@ -57,14 +57,14 @@ block contenido
       if categoriaSel && categoriaSel !== 'Todas'
         input(type="hidden" name="categoria" value=categoriaSel)
 
-      //- Filtros de estado (En vivo / Pendientes / Finalizadas / Todas)
+      //- Filtros de estado (En vivo / Próximamente / Finalizadas (24h) / Todas)
       div(class="flex flex-wrap items-center gap-1.5 text-xs font-medium")
         span(class="text-[#8A7F76] mr-2") Estado:
         -
           const estados = [
             { clave: 'activa', label: 'En vivo ahora', icono: 'M13 10V3L4 14h7v7l9-11h-7z' },
-            { clave: 'pendiente', label: 'Pendientes', icono: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-            { clave: 'finalizada', label: 'Finalizadas', icono: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { clave: 'programada', label: 'Próximamente', icono: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { clave: 'finalizada', label: 'Finalizadas (Últimas 24h)', icono: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
             { clave: 'todas', label: 'Todas', icono: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' }
           ]
         each est in estados
@@ -111,20 +111,31 @@ block contenido
                 = subasta.categoria ? subasta.categoria.nombre : 'General'
 
               //- Badge de estado
-              if subasta.estado === 'activa'
+              - const est = subasta.estadoEfectivo || subasta.estado
+              if est === 'activa'
                 div(class="absolute top-3 right-3 bg-[#059669] text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-md badge-live")
                   span(class="w-1.5 h-1.5 rounded-full bg-white dot-live")
                   span EN VIVO
-              else if subasta.estado === 'pendiente'
-                div(class="absolute top-3 right-3 bg-[#FFFBEB] text-[#92400E] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-[#FDE68A]")
+              else if est === 'programada'
+                div(class="absolute top-3 right-3 bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-md")
+                  svg(class="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2")
+                    path(stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z")
+                  span PROGRAMADA
+              else if est === 'pendiente'
+                div(class="absolute top-3 right-3 bg-[#FFFBEB] text-[#92400E] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-[#FDE68A] shadow-md")
                   svg(class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2")
                     path(stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z")
                   span PENDIENTE
-              else if subasta.estado === 'finalizada'
-                div(class="absolute top-3 right-3 bg-[#EFECE6] text-[#8A7F76] px-3 py-1 rounded-full text-xs font-bold border border-[#E2DDD5] flex items-center gap-1.5")
+              else if est === 'finalizada'
+                div(class="absolute top-3 right-3 bg-[#EFECE6] text-[#8A7F76] px-3 py-1 rounded-full text-xs font-bold border border-[#E2DDD5] flex items-center gap-1.5 shadow-md")
                   svg(class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2")
                     path(stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z")
                   span FINALIZADA
+              else if est === 'rechazada'
+                div(class="absolute top-3 right-3 bg-[#FEF2F2] text-[#991B1B] px-3 py-1 rounded-full text-xs font-bold border border-[#FECACA] flex items-center gap-1.5 shadow-md")
+                  svg(class="w-3 h-3 text-[#DC2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2")
+                    path(stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12")
+                  span RECHAZADA
 
             //- Info de la subasta
             div(class="p-5 flex flex-col flex-grow")

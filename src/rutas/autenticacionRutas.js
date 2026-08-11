@@ -4,6 +4,8 @@ const express = require("express");
 const {
     solicitarCodigoRegistro,
     registrarUsuario,
+    solicitarCodigoRecuperacion,
+    restablecerClaveConCodigo,
     iniciarSesion,
     cerrarSesion,
     obtenerPerfil
@@ -24,6 +26,12 @@ router.post("/solicitar-codigo", solicitarCodigoRegistro);
 
 // POST /api/autenticacion/registro
 router.post("/registro", registrarUsuario);
+
+// POST /api/autenticacion/solicitar-recuperacion
+router.post("/solicitar-recuperacion", solicitarCodigoRecuperacion);
+
+// POST /api/autenticacion/restablecer-clave
+router.post("/restablecer-clave", restablecerClaveConCodigo);
 
 // POST /api/autenticacion/login
 router.post("/login", iniciarSesion);

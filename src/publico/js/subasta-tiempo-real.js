@@ -1,5 +1,5 @@
 // Cliente Socket.io para pujas en tiempo real en la página de detalle de subasta.
-// Este script se carga solo cuando la subasta está activa.
+// Este script se carga cuando la subasta está activa o programada.
 
 (function () {
     "use strict";
@@ -10,6 +10,7 @@
 
     const subastaId = document.getElementById("subasta-id").value;
     const cronometroEl = document.getElementById("cronometro");
+    const cronometroGeneralEl = document.getElementById("cronometro-general");
     const precioActualEl = document.getElementById("precio-actual");
     const montoPujaInput = document.getElementById("monto-puja");
     const btnPujar = document.getElementById("btn-pujar");
@@ -39,10 +40,47 @@
         return `${String(min).padStart(2, "0")}:${String(seg).padStart(2, "0")}`;
     };
 
+    const formatearTiempoLargo = (ms) => {
+        if (!ms || ms <= 0) return "00:00:00";
+        const totalSegundos = Math.floor(ms / 1000);
+        const dias = Math.floor(totalSegundos / 86400);
+        const horas = Math.floor((totalSegundos % 86400) / 3600);
+        const minutos = Math.floor((totalSegundos % 3600) / 60);
+        const segundos = totalSegundos % 60;
+
+        const hh = String(horas).padStart(2, "0");
+        const mm = String(minutos).padStart(2, "0");
+        const ss = String(segundos).padStart(2, "0");
+
+        if (dias > 0) {
+            return `${dias}d ${hh}:${mm}:${ss}`;
+        }
+        return `${hh}:${mm}:${ss}`;
+    };
+
     const formatearHora = (fecha) => {
         const d = new Date(fecha);
         return d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     };
+
+    //====================================
+    // TEMPORIZADOR DEL TIEMPO TOTAL DE LA SUBASTA
+    //====================================
+
+    const fechaFinVal = document.getElementById("subasta-fecha-fin") ? document.getElementById("subasta-fecha-fin").value : null;
+
+    let timerGeneralInterval = null;
+
+    const actualizarCronometroGeneral = () => {
+        if (!cronometroGeneralEl || !fechaFinVal) return;
+        const msRestantes = new Date(fechaFinVal).getTime() - Date.now();
+        cronometroGeneralEl.textContent = formatearTiempoLargo(msRestantes);
+    };
+
+    if (fechaFinVal && cronometroGeneralEl) {
+        actualizarCronometroGeneral();
+        timerGeneralInterval = setInterval(actualizarCronometroGeneral, 1000);
+    }
 
     //====================================
     // ACTUALIZAR PUJA MÍNIMA
@@ -67,19 +105,19 @@
 
     const crearElementoPuja = (puja) => {
         const div = document.createElement("div");
-        div.className = "flex items-center justify-between bg-slate-800/50 rounded-xl px-4 py-3 border border-slate-700/50 animate-pulse-once";
+        div.className = "flex items-center justify-between bg-[#FAFAF8] rounded-xl px-4 py-3 border border-[#EBE5DC]";
 
         const inicial = puja.usuario ? puja.usuario.charAt(0).toUpperCase() : "?";
 
         div.innerHTML = `
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-400">${inicial}</div>
+                <div class="w-8 h-8 rounded-full bg-[#FFF7ED] border border-[#FFEDD5] flex items-center justify-center text-xs font-bold text-[#C2410C]">${inicial}</div>
                 <div>
-                    <p class="text-sm font-semibold text-white">${puja.usuario || "Anónimo"}</p>
-                    <p class="text-xs text-slate-500">${formatearHora(puja.fecha)}</p>
+                    <p class="text-sm font-semibold text-[#1A1614]">${puja.usuario || "Anónimo"}</p>
+                    <p class="text-xs text-[#8A7F76]">${formatearHora(puja.fecha)}</p>
                 </div>
             </div>
-            <p class="text-emerald-400 font-bold">${formatearMonto(puja.monto)}</p>
+            <p class="text-[#D97706] font-bold">${formatearMonto(puja.monto)}</p>
         `;
 
         return div;
@@ -139,7 +177,11 @@
             }
         } else if (datos.segundosRestantes > 0) {
             if (timerProgramadaInterval) clearInterval(timerProgramadaInterval);
-            if (cronometroEl) cronometroEl.textContent = formatearTiempo(datos.segundosRestantes);
+            if (cronometroEl) {
+                cronometroEl.textContent = formatearTiempo(datos.segundosRestantes);
+                cronometroEl.classList.remove("text-[#DC2626]");
+                cronometroEl.classList.add("text-[#D97706]");
+            }
         }
     });
 
@@ -163,14 +205,14 @@
     socket.on("subasta:nueva-puja", (datos) => {
         // Actualizar precio
         precioActual = datos.precioActual;
-        precioActualEl.textContent = formatearMonto(precioActual);
+        if (precioActualEl) precioActualEl.textContent = formatearMonto(precioActual);
         actualizarPujaMinima();
 
-        // Actualizar cronómetro
-        if (datos.segundosRestantes) {
+        // Actualizar cronómetro de inactividad
+        if (datos.segundosRestantes && cronometroEl) {
             cronometroEl.textContent = formatearTiempo(datos.segundosRestantes);
-            cronometroEl.classList.remove("text-red-400");
-            cronometroEl.classList.add("text-white");
+            cronometroEl.classList.remove("text-[#DC2626]");
+            cronometroEl.classList.add("text-[#D97706]");
         }
 
         // Quitar el estado vacío si existe
@@ -180,11 +222,6 @@
         // Agregar la puja al inicio de la lista
         const elemento = crearElementoPuja(datos);
         listaPujasEl.insertBefore(elemento, listaPujasEl.firstChild);
-
-        // Flash visual en el elemento
-        setTimeout(() => {
-            elemento.classList.remove("animate-pulse-once");
-        }, 600);
     });
 
     //------------------------------------
@@ -192,15 +229,17 @@
     //------------------------------------
 
     socket.on("subasta:tiempo-actualizado", (datos) => {
-        cronometroEl.textContent = formatearTiempo(datos.segundosRestantes);
+        if (cronometroEl) {
+            cronometroEl.textContent = formatearTiempo(datos.segundosRestantes);
 
-        // Efecto de urgencia cuando queda menos de 1 minuto
-        if (datos.segundosRestantes <= 60 && datos.segundosRestantes > 0) {
-            cronometroEl.classList.add("text-red-400");
-            cronometroEl.classList.remove("text-white");
-        } else {
-            cronometroEl.classList.remove("text-red-400");
-            cronometroEl.classList.add("text-white");
+            // Efecto de urgencia cuando queda menos de 1 minuto en inactividad
+            if (datos.segundosRestantes <= 60 && datos.segundosRestantes > 0) {
+                cronometroEl.classList.add("text-[#DC2626]");
+                cronometroEl.classList.remove("text-[#D97706]");
+            } else {
+                cronometroEl.classList.remove("text-[#DC2626]");
+                cronometroEl.classList.add("text-[#D97706]");
+            }
         }
     });
 
@@ -209,24 +248,30 @@
     //------------------------------------
 
     socket.on("subasta:finalizada", (datos) => {
-        cronometroEl.textContent = "00:00";
-        cronometroEl.classList.remove("text-red-400");
-        cronometroEl.classList.add("text-slate-500");
+        if (cronometroEl) {
+            cronometroEl.textContent = "00:00";
+            cronometroEl.classList.remove("text-[#DC2626]", "text-[#D97706]");
+            cronometroEl.classList.add("text-[#ADA69E]");
+        }
+
+        if (timerGeneralInterval) clearInterval(timerGeneralInterval);
+        if (cronometroGeneralEl) cronometroGeneralEl.textContent = "00:00:00";
 
         // Deshabilitar formulario de puja
         if (montoPujaInput) montoPujaInput.disabled = true;
         if (btnPujar) {
             btnPujar.disabled = true;
             btnPujar.textContent = "Finalizada";
-            btnPujar.classList.remove("bg-emerald-500", "hover:bg-emerald-600", "shadow-lg", "shadow-emerald-500/20");
-            btnPujar.classList.add("bg-slate-700", "cursor-not-allowed");
+            btnPujar.className = "w-full bg-[#EFECE6] text-[#ADA69E] font-bold px-6 py-3 rounded-[10px] cursor-not-allowed text-center";
         }
 
         // Mostrar mensaje de finalización
         const banner = document.createElement("div");
-        banner.className = "bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-center mt-4";
-        banner.innerHTML = `<p class="text-amber-400 font-semibold">${datos.mensaje}</p>`;
-        precioActualEl.parentElement.appendChild(banner);
+        banner.className = "bg-[#FFF7ED] border border-[#FFEDD5] rounded-xl p-4 text-center mt-4";
+        banner.innerHTML = `<p class="text-[#C2410C] font-semibold">${datos.mensaje}</p>`;
+        if (precioActualEl && precioActualEl.parentElement) {
+            precioActualEl.parentElement.appendChild(banner);
+        }
     });
 
     //------------------------------------
@@ -308,6 +353,7 @@
     //====================================
 
     window.addEventListener("beforeunload", () => {
+        if (timerGeneralInterval) clearInterval(timerGeneralInterval);
         socket.emit("subasta:salir", { subastaId });
         socket.disconnect();
     });

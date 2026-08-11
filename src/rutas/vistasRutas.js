@@ -3,26 +3,15 @@ const router = express.Router();
 const { Op } = require('sequelize');
 const { Subasta, Usuario, Categoria } = require('../modelos');
 
-const { requiereSesionVista, cargarUsuarioSiExiste } = require('../intermediarios/autenticacionIntermediario');
+const { requiereSesionVista, cargarUsuarioSiExiste, requiereAdminVista } = require('../intermediarios/autenticacionIntermediario');
 const { obtenerHistorialUsuario } = require('../controladores/usuarioControlador');
 const { mostrarDetalleSubasta, mostrarFormularioCrear } = require('../controladores/subastaControlador');
 const { cerrarSesion } = require('../controladores/autenticacionControlador');
 
-// Función helper para calcular estado en tiempo real (programada / activa / finalizada)
-const obtenerEstadoEfectivo = (subasta) => {
-  if (subasta.estado === 'rechazada') return 'rechazada';
-  if (subasta.estado === 'finalizada') return 'finalizada';
-
-  const ahora = new Date();
-  if (subasta.fecha_inicio && new Date(subasta.fecha_inicio) > ahora) {
-    return 'programada';
-  }
-
-  return 'activa';
-};
+const { obtenerEstadoEfectivo } = require('../utilidades/fechas');
 
 // Ruta principal / Landing Page
-router.get('/', async (req, res) => {
+router.get('/', cargarUsuarioSiExiste, async (req, res) => {
   try {
     const subastas = await Subasta.findAll({
       where: { estado: 'activa' },
@@ -34,114 +23,140 @@ router.get('/', async (req, res) => {
     });
 
     const mezcladas = subastas
-      .map((s) => ({ subasta: s, orden: Math.random() }))
-      .sort((a, b) => a.orden - b.orden)
-      .slice(0, 6)
-      .map(({ subasta: s }) => ({
-        id: s.id,
-        titulo: s.titulo,
-        descripcion: s.descripcion,
-        imagen_url: s.imagen_url,
-        precio_actual: Number(s.precio_actual),
-        precio_inicial: Number(s.precio_inicial),
-        estado: s.estado,
-        estadoEfectivo: obtenerEstadoEfectivo(s),
-        categoria: s.categoria ? s.categoria.nombre : 'General',
-        vendedor: s.vendedor ? s.vendedor.nombre : 'Vendedor',
-        fecha_inicio: s.fecha_inicio,
-        fecha_fin: s.fecha_fin
-      }));
+      .map((s) => {
+        const estEfectivo = obtenerEstadoEfectivo(s);
+        return {
+          id: s.id,
+          titulo: s.titulo,
+          descripcion: s.descripcion,
+          imagen_url: s.imagen_url,
+          precio_actual: Number(s.precio_actual),
+          precio_inicial: Number(s.precio_inicial),
+          estado: s.estado,
+          estadoEfectivo: estEfectivo,
+          categoria: s.categoria ? s.categoria.nombre : 'General',
+          vendedor: s.vendedor ? s.vendedor.nombre : 'Vendedor',
+          fecha_inicio: s.fecha_inicio,
+          fecha_fin: s.fecha_fin
+        };
+      })
+      .filter((s) => s.estadoEfectivo === 'activa')
+      .slice(0, 6);
 
     res.render('paginas/inicio', {
       titulo: 'Inicio - SubastasPro',
-      subastasDestacadas: mezcladas
+      subastasDestacadas: mezcladas,
+      usuario: req.usuario || null
     });
   } catch (error) {
     console.error('Error al cargar landing page:', error.message);
     res.render('paginas/inicio', {
       titulo: 'Inicio - SubastasPro',
-      subastasDestacadas: []
+      subastasDestacadas: [],
+      usuario: req.usuario || null
     });
   }
 });
 
-// Catálogo de subastas activas (con búsqueda, filtros por categoría/estado y ordenación)
+// Catálogo de subastas (con búsqueda, filtros por categoría/estado y ordenación)
 router.get('/subastas', cargarUsuarioSiExiste, async (req, res) => {
   try {
     const { buscar, categoria, estado, orden } = req.query;
+    const estadoFiltro = estado || 'activa';
 
-    const condicionWhere = {};
-
-    // 1. Filtro por Estado
-    if (estado && estado !== 'todas') {
-      condicionWhere.estado = estado;
-    } else if (!estado) {
-      condicionWhere.estado = 'activa';
-    }
-
-    // 2. Búsqueda por texto en título o descripción
-    if (buscar && buscar.trim() !== '') {
-      const termino = `%${buscar.trim()}%`;
-      condicionWhere[Op.or] = [
-        { titulo: { [Op.iLike]: termino } },
-        { descripcion: { [Op.iLike]: termino } }
-      ];
-    }
-
-    // 3. Ordenación
-    let ordenConsulta = [['created_at', 'DESC']];
-    if (orden === 'menor-precio') {
-      ordenConsulta = [['precio_actual', 'ASC']];
-    } else if (orden === 'mayor-precio') {
-      ordenConsulta = [['precio_actual', 'DESC']];
-    } else if (orden === 'tiempo') {
-      ordenConsulta = [['fecha_fin', 'ASC']];
-    }
-
-    // 4. Filtro por Categoría
-    const includeCategoria = {
-      model: Categoria,
-      as: 'categoria',
-      attributes: ['id', 'nombre']
-    };
-
-    if (categoria && categoria !== 'Todas') {
-      includeCategoria.where = { nombre: categoria };
-    }
-
+    // Solo se consultan subastas que hayan sido aprobadas (estado 'activa' o 'finalizada' en BD)
     const subastas = await Subasta.findAll({
-      where: condicionWhere,
+      where: {
+        estado: { [Op.in]: ['activa', 'finalizada'] }
+      },
       include: [
         { model: Usuario, as: 'vendedor', attributes: ['id', 'nombre'] },
-        includeCategoria
+        {
+          model: Categoria,
+          as: 'categoria',
+          attributes: ['id', 'nombre'],
+          ...(categoria && categoria !== 'Todas' ? { where: { nombre: categoria } } : {})
+        }
       ],
-      order: ordenConsulta
+      order: orden === 'menor-precio'
+        ? [['precio_actual', 'ASC']]
+        : orden === 'mayor-precio'
+        ? [['precio_actual', 'DESC']]
+        : orden === 'tiempo'
+        ? [['fecha_fin', 'ASC']]
+        : [['created_at', 'DESC']]
     });
 
-    const subastasFormateadas = subastas.map((s) => ({
-      id: s.id,
-      titulo: s.titulo,
-      descripcion: s.descripcion,
-      imagen_url: s.imagen_url,
-      precio_inicial: Number(s.precio_inicial),
-      precio_actual: Number(s.precio_actual),
-      estado: s.estado,
-      estadoEfectivo: obtenerEstadoEfectivo(s),
-      creador: s.vendedor,
-      categoria: s.categoria,
-      fecha_inicio: s.fecha_inicio,
-      fecha_fin: s.fecha_fin,
-      tiempo_inactividad_minutos: s.tiempo_inactividad_minutos
-    }));
+    const ahora = new Date();
+    const limite24Horas = new Date(ahora.getTime() - 24 * 60 * 60 * 1000);
+
+    let subastasFormateadas = subastas.map((s) => {
+      const estEfectivo = obtenerEstadoEfectivo(s);
+      return {
+        id: s.id,
+        titulo: s.titulo,
+        descripcion: s.descripcion,
+        imagen_url: s.imagen_url,
+        precio_inicial: Number(s.precio_inicial),
+        precio_actual: Number(s.precio_actual),
+        estado: s.estado,
+        estadoEfectivo: estEfectivo,
+        creador: s.vendedor,
+        categoria: s.categoria,
+        fecha_inicio: s.fecha_inicio,
+        fecha_fin: s.fecha_fin,
+        fecha_cierre: s.fecha_cierre,
+        tiempo_inactividad_minutos: s.tiempo_inactividad_minutos
+      };
+    });
+
+    // Búsqueda por texto si se especifica
+    if (buscar && buscar.trim() !== '') {
+      const termino = buscar.trim().toLowerCase();
+      subastasFormateadas = subastasFormateadas.filter((s) =>
+        s.titulo.toLowerCase().includes(termino) ||
+        (s.descripcion && s.descripcion.toLowerCase().includes(termino))
+      );
+    }
+
+    // Filtrado por las reglas públicas requeridas:
+    // - 'activa': Subastas en vivo listas para pujar ahora mismo
+    // - 'programada': Subastas aprobadas que inician próximamente
+    // - 'finalizada': Subastas terminadas en las últimas 24 horas
+    // - 'todas': Todas las públicas (en vivo, programadas y finalizadas en las últimas 24h)
+    let subastasFiltradas = [];
+
+    if (estadoFiltro === 'activa') {
+      subastasFiltradas = subastasFormateadas.filter((s) => s.estadoEfectivo === 'activa');
+    } else if (estadoFiltro === 'programada') {
+      subastasFiltradas = subastasFormateadas.filter((s) => s.estadoEfectivo === 'programada');
+    } else if (estadoFiltro === 'finalizada') {
+      subastasFiltradas = subastasFormateadas.filter((s) => {
+        if (s.estadoEfectivo !== 'finalizada') return false;
+        const fechaFin = new Date(s.fecha_cierre || s.fecha_fin || s.fecha_inicio);
+        return fechaFin >= limite24Horas;
+      });
+    } else if (estadoFiltro === 'todas') {
+      subastasFiltradas = subastasFormateadas.filter((s) => {
+        if (s.estadoEfectivo === 'activa' || s.estadoEfectivo === 'programada') return true;
+        if (s.estadoEfectivo === 'finalizada') {
+          const fechaFin = new Date(s.fecha_cierre || s.fecha_fin || s.fecha_inicio);
+          return fechaFin >= limite24Horas;
+        }
+        return false;
+      });
+    } else {
+      subastasFiltradas = subastasFormateadas.filter((s) => s.estadoEfectivo === 'activa');
+    }
 
     res.render('paginas/subastas', {
-      titulo: 'Subastas Activas - SubastasPro',
+      titulo: 'Subastas - SubastasPro',
       paginaActual: 'subastas',
-      subastas: subastasFormateadas,
+      subastas: subastasFiltradas,
       usuario: req.usuario || null,
       buscar: buscar || '',
       categoriaSel: categoria || 'Todas',
-      estadoSel: estado || 'activa',
+      estadoSel: estadoFiltro,
       ordenSel: orden || 'recientes',
       busquedaActual: buscar || ''
     });
@@ -171,13 +186,13 @@ router.get('/crear-subasta', requiereSesionVista, mostrarFormularioCrear);
 router.get('/historial', requiereSesionVista, obtenerHistorialUsuario);
 
 // Panel de administración (moderación de subastas pendientes)
-router.get('/admin', async (req, res) => {
+router.get('/admin', requiereSesionVista, requiereAdminVista, async (req, res) => {
   try {
     const subastas = await Subasta.findAll({
       where: { estado: 'pendiente' },
       include: [
-        { model: Usuario, attributes: ['id', 'nombre', 'correo'] },
-        { model: Categoria, attributes: ['id', 'nombre'] }
+        { model: Usuario, as: 'vendedor', attributes: ['id', 'nombre', 'correo'] },
+        { model: Categoria, as: 'categoria', attributes: ['id', 'nombre'] }
       ],
       order: [['created_at', 'DESC']]
     });
@@ -186,14 +201,15 @@ router.get('/admin', async (req, res) => {
       titulo: 'Panel Admin - SubastasPro',
       paginaActual: 'admin',
       subastas,
-      usuario: null
+      usuario: req.usuario
     });
   } catch (error) {
+    console.error('Error al cargar panel de administración:', error);
     res.render('paginas/panel-admin', {
       titulo: 'Panel Admin - SubastasPro',
       paginaActual: 'admin',
       subastas: [],
-      usuario: null
+      usuario: req.usuario
     });
   }
 });

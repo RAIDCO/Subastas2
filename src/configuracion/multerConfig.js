@@ -1,33 +1,60 @@
-// Configuración de Multer para subir imágenes de subastas
+// Configuración de Multer para subir imágenes de subastas (Cloudinary + Local Fallback)
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 //====================================
-// DIRECTORIO DE SUBIDA
+// CREDENCIALES DE CLOUDINARY
 //====================================
 
-const DIRECTORIO_SUBIDAS = path.join(__dirname, "..", "publico", "uploads");
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+const apiKey = process.env.CLOUDINARY_API_KEY;
+const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-// Crear el directorio si no existe
-if (!fs.existsSync(DIRECTORIO_SUBIDAS)) {
-    fs.mkdirSync(DIRECTORIO_SUBIDAS, { recursive: true });
-}
+let almacenamiento;
 
-//====================================
-// ALMACENAMIENTO EN DISCO
-//====================================
+if (cloudName && apiKey && apiSecret && cloudName !== "tu_cloud_name") {
+    // Configurar cliente de Cloudinary
+    cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret
+    });
 
-const almacenamiento = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, DIRECTORIO_SUBIDAS);
-    },
-    filename: (req, file, cb) => {
-        const extension = path.extname(file.originalname).toLowerCase();
-        const nombreUnico = `subasta-${Date.now()}-${Math.round(Math.random() * 1e6)}${extension}`;
-        cb(null, nombreUnico);
+    // Storage de Multer conectado directamente a Cloudinary
+    almacenamiento = new CloudinaryStorage({
+        cloudinary: cloudinary,
+        params: {
+            folder: "subastas_pro",
+            allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
+            transformation: [{ width: 1200, height: 1200, crop: "limit", quality: "auto" }]
+        }
+    });
+
+    console.log("[Uploads] Almacenamiento en la nube activo con Cloudinary.");
+} else {
+    // Fallback: almacenamiento local en /publico/uploads
+    const DIRECTORIO_SUBIDAS = path.join(__dirname, "..", "publico", "uploads");
+
+    if (!fs.existsSync(DIRECTORIO_SUBIDAS)) {
+        fs.mkdirSync(DIRECTORIO_SUBIDAS, { recursive: true });
     }
-});
+
+    almacenamiento = multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, DIRECTORIO_SUBIDAS);
+        },
+        filename: (req, file, cb) => {
+            const extension = path.extname(file.originalname).toLowerCase();
+            const nombreUnico = `subasta-${Date.now()}-${Math.round(Math.random() * 1e6)}${extension}`;
+            cb(null, nombreUnico);
+        }
+    });
+
+    console.log("[Uploads] Credenciales de Cloudinary no detectadas. Usando carpeta local /uploads.");
+}
 
 //====================================
 // FILTRO DE ARCHIVOS (solo imágenes)
@@ -57,28 +84,11 @@ const subirImagen = multer({
     }
 });
 
-//====================================
-// ELIMINAR IMAGEN DEL DISCO
-//====================================
-
-const eliminarImagen = (rutaRelativa) => {
-    if (!rutaRelativa) return;
-
-    // La ruta almacenada es "/uploads/nombre.jpg", convertir a ruta absoluta
-    const nombreArchivo = path.basename(rutaRelativa);
-    const rutaAbsoluta = path.join(DIRECTORIO_SUBIDAS, nombreArchivo);
-
-    fs.unlink(rutaAbsoluta, (err) => {
-        if (err && err.code !== "ENOENT") {
-            console.error(`[Uploads] Error al eliminar ${nombreArchivo}:`, err.message);
-        } else {
-            console.log(`[Uploads] Imagen eliminada: ${nombreArchivo}`);
-        }
-    });
+const eliminarImagen = () => {
+    // Las imágenes se mantienen almacenadas en la nube/servidor de forma permanente
 };
 
 module.exports = {
     subirImagen,
-    eliminarImagen,
-    DIRECTORIO_SUBIDAS
+    eliminarImagen
 };

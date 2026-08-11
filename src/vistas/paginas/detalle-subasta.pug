@@ -95,9 +95,22 @@ block contenido
             div(id="cronometro" class="text-5xl font-extrabold text-purple-600 font-mono tracking-wider timer-digit") --:--
             p(class="text-[#8A7F76] text-xs mt-2") Las pujas se abrirán cuando inicie el tiempo
           else if estadoMostrar === 'activa'
-            p(class="text-[#8A7F76] text-xs uppercase tracking-wide mb-2") Tiempo restante
-            div(id="cronometro" class="text-5xl font-extrabold text-[#1A1614] font-mono tracking-wider timer-digit") --:--
-            p(class="text-[#8A7F76] text-xs mt-2") Se reinicia con cada nueva puja
+            //- Tiempo total restante de la subasta (Cierre General)
+            div(class="mb-5 pb-5 border-b border-[#EBE5DC]")
+              div(class="flex items-center justify-center gap-1.5 text-[#8A7F76] text-xs uppercase tracking-wide mb-1 font-semibold")
+                svg(class="w-4 h-4 text-[#D97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2")
+                  path(stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z")
+                span Tiempo Total de la Subasta
+              div(id="cronometro-general" class="text-3xl lg:text-4xl font-extrabold text-[#1A1614] font-mono tracking-wider timer-digit") --:--:--
+              p(class="text-[#8A7F76] text-xs mt-1") Cierre general previsto
+
+            //- Temporizador por inactividad
+            div
+              div(class="flex items-center justify-center gap-1.5 text-[#8A7F76] text-xs uppercase tracking-wide mb-1 font-semibold")
+                span(class="w-2 h-2 rounded-full bg-[#059669] dot-live")
+                span Cierre por Inactividad
+              div(id="cronometro" class="text-4xl lg:text-5xl font-extrabold text-[#D97706] font-mono tracking-wider timer-digit") --:--
+              p(class="text-[#8A7F76] text-xs mt-1") Se reinicia con cada puja (#{subasta.tiempo_inactividad_minutos} min)
           else if estadoMostrar === 'finalizada'
             p(class="text-[#8A7F76] text-xs uppercase tracking-wide mb-2") Subasta finalizada
             div(class="text-3xl font-extrabold text-[#ADA69E] font-mono") 00:00
@@ -170,6 +183,7 @@ block contenido
     input(type="hidden" id="subasta-estado-efectivo" value=estadoMostrar)
     input(type="hidden" id="subasta-precio-actual" value=subasta.precio_actual)
     input(type="hidden" id="subasta-fecha-inicio" value=subasta.fecha_inicio)
+    input(type="hidden" id="subasta-fecha-fin" value=subasta.fecha_fin)
 
 block scripts
   if subasta && (subasta.estado === 'activa' || estadoMostrar === 'programada')

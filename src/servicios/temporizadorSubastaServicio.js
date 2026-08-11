@@ -90,11 +90,6 @@ const finalizarSubasta = async (subastaId, io) => {
                 : "La subasta ha finalizado sin pujas."
         });
 
-        // Eliminar la imagen del disco (las imágenes son temporales)
-        if (subasta.imagen_url) {
-            eliminarImagen(subasta.imagen_url);
-        }
-
         console.log(`[Temporizador] Subasta ${subastaId} finalizada.`);
     } catch (error) {
         console.error(`[Temporizador] Error al finalizar subasta ${subastaId}:`, error.message);
