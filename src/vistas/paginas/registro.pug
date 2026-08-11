@@ -64,29 +64,35 @@ html(lang="es")
         span ¡Cuenta creada correctamente! Redirigiendo al inicio de sesión...
 
       //- Formulario Paso 1: Datos de Registro
-      form(id="form-paso-1" class="space-y-5")
+      form(id="form-paso-1" class="space-y-5" novalidate)
 
         div
           label(class="block text-[#1A1614] mb-2 text-sm font-medium") Nombre completo
           input(type="text" id="nombre" name="nombre" placeholder="María González" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+          span(id="error-nombre" class="hidden text-[#DC2626] text-xs mt-1 block")
 
         div
           label(class="block text-[#1A1614] mb-2 text-sm font-medium") Correo electrónico (Gmail)
           input(type="email" id="correo" name="correo" placeholder="tu@gmail.com" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+          span(id="error-correo" class="hidden text-[#DC2626] text-xs mt-1 block")
 
         div
           label(class="block text-[#1A1614] mb-2 text-sm font-medium") Contraseña
           input(type="password" id="clave" name="clave" placeholder="••••••••" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+          span(id="error-clave" class="hidden text-[#DC2626] text-xs mt-1 block")
 
         div
           label(class="block text-[#1A1614] mb-2 text-sm font-medium") Confirmar contraseña
           input(type="password" id="confirmarClave" name="confirmarClave" placeholder="••••••••" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+          span(id="error-confirmarClave" class="hidden text-[#DC2626] text-xs mt-1 block")
 
-        div(class="flex items-center gap-2 text-[#8A7F76] text-xs cursor-pointer")
-          input(type="checkbox" required id="check-terminos" class="rounded border-[#E2DDD5] bg-[#EFECE6] text-[#D97706] focus:ring-[#FDE68A]")
-          label(for="check-terminos" class="cursor-pointer")
-            | Acepto los
-            button(type="button" id="btn-abrir-terminos" class="text-[#D97706] hover:underline font-medium ml-1 inline-block") términos y condiciones
+        div
+          div(class="flex items-center gap-2 text-[#8A7F76] text-xs cursor-pointer")
+            input(type="checkbox" required id="check-terminos" class="rounded border-[#E2DDD5] bg-[#EFECE6] text-[#D97706] focus:ring-[#FDE68A]")
+            label(for="check-terminos" class="cursor-pointer")
+              | Acepto los
+              button(type="button" id="btn-abrir-terminos" class="text-[#D97706] hover:underline font-medium ml-1 inline-block") términos y condiciones
+          span(id="error-terminos" class="hidden text-[#DC2626] text-xs mt-1 block")
 
         button(type="submit" id="btn-solicitar-codigo" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-3 rounded-[10px] transition-colors shadow-btn")
           | Enviar Código a mi Gmail
@@ -174,7 +180,10 @@ html(lang="es")
         });
         btnAceptarTerminosModal.addEventListener('click', () => {
           modalTerminos.classList.add('hidden');
-          if (checkTerminos) checkTerminos.checked = true;
+          if (checkTerminos) {
+            checkTerminos.checked = true;
+            limpiarErrorCampo('check-terminos', 'error-terminos');
+          }
         });
         modalTerminos.addEventListener('click', (e) => {
           if (e.target === modalTerminos) modalTerminos.classList.add('hidden');
@@ -202,6 +211,129 @@ html(lang="es")
         alertaInfo.classList.remove('hidden');
       }
 
+      // ── Utilidades de validación inline ──
+      function mostrarErrorCampo(inputId, errorId, mensaje) {
+        const input = document.getElementById(inputId);
+        const errorSpan = document.getElementById(errorId);
+        if (input) {
+          input.classList.add('border-[#DC2626]');
+          input.classList.remove('border-[#E2DDD5]');
+        }
+        if (errorSpan) {
+          errorSpan.textContent = mensaje;
+          errorSpan.classList.remove('hidden');
+        }
+      }
+
+      function limpiarErrorCampo(inputId, errorId) {
+        const input = document.getElementById(inputId);
+        const errorSpan = document.getElementById(errorId);
+        if (input) {
+          input.classList.remove('border-[#DC2626]');
+          input.classList.add('border-[#E2DDD5]');
+        }
+        if (errorSpan) {
+          errorSpan.textContent = '';
+          errorSpan.classList.add('hidden');
+        }
+      }
+
+      function esCorreoValido(correo) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+      }
+
+      function validarNombre() {
+        const valor = document.getElementById('nombre').value.trim();
+        if (!valor) {
+          mostrarErrorCampo('nombre', 'error-nombre', 'El nombre es obligatorio.');
+          return false;
+        }
+        if (valor.length < 3) {
+          mostrarErrorCampo('nombre', 'error-nombre', 'El nombre debe tener al menos 3 caracteres. Actualmente tiene ' + valor.length + '.');
+          return false;
+        }
+        limpiarErrorCampo('nombre', 'error-nombre');
+        return true;
+      }
+
+      function validarCorreo() {
+        const valor = document.getElementById('correo').value.trim().toLowerCase();
+        if (!valor) {
+          mostrarErrorCampo('correo', 'error-correo', 'El correo electrónico es obligatorio.');
+          return false;
+        }
+        if (!esCorreoValido(valor)) {
+          mostrarErrorCampo('correo', 'error-correo', 'Ingresa un correo electrónico válido (ej: usuario@gmail.com).');
+          return false;
+        }
+        if (!valor.endsWith('@gmail.com') && !valor.endsWith('@googlemail.com')) {
+          mostrarErrorCampo('correo', 'error-correo', 'Solo se aceptan correos de Gmail (@gmail.com).');
+          return false;
+        }
+        limpiarErrorCampo('correo', 'error-correo');
+        return true;
+      }
+
+      function validarClave() {
+        const valor = document.getElementById('clave').value;
+        if (!valor) {
+          mostrarErrorCampo('clave', 'error-clave', 'La contraseña es obligatoria.');
+          return false;
+        }
+        if (valor.length < 8) {
+          mostrarErrorCampo('clave', 'error-clave', 'La contraseña debe tener al menos 8 caracteres. Actualmente tiene ' + valor.length + '.');
+          return false;
+        }
+        limpiarErrorCampo('clave', 'error-clave');
+        // Re-validar confirmación si ya tiene valor
+        const confirmar = document.getElementById('confirmarClave').value;
+        if (confirmar) validarConfirmarClave();
+        return true;
+      }
+
+      function validarConfirmarClave() {
+        const clave = document.getElementById('clave').value;
+        const confirmar = document.getElementById('confirmarClave').value;
+        if (!confirmar) {
+          mostrarErrorCampo('confirmarClave', 'error-confirmarClave', 'Debes confirmar tu contraseña.');
+          return false;
+        }
+        if (clave !== confirmar) {
+          mostrarErrorCampo('confirmarClave', 'error-confirmarClave', 'Las contraseñas no coinciden.');
+          return false;
+        }
+        limpiarErrorCampo('confirmarClave', 'error-confirmarClave');
+        return true;
+      }
+
+      function validarTerminos() {
+        const check = document.getElementById('check-terminos');
+        if (!check || !check.checked) {
+          mostrarErrorCampo('check-terminos', 'error-terminos', 'Debes aceptar los términos y condiciones.');
+          return false;
+        }
+        limpiarErrorCampo('check-terminos', 'error-terminos');
+        return true;
+      }
+
+      function validarFormularioPaso1() {
+        const resultados = [
+          validarNombre(),
+          validarCorreo(),
+          validarClave(),
+          validarConfirmarClave(),
+          validarTerminos()
+        ];
+        return resultados.every(r => r === true);
+      }
+
+      // Blur validation — real-time feedback
+      document.getElementById('nombre').addEventListener('blur', validarNombre);
+      document.getElementById('correo').addEventListener('blur', validarCorreo);
+      document.getElementById('clave').addEventListener('blur', validarClave);
+      document.getElementById('confirmarClave').addEventListener('blur', validarConfirmarClave);
+      document.getElementById('check-terminos').addEventListener('change', validarTerminos);
+
       function iniciarContadorReenvio() {
         contadorSegundos = 60;
         btnReenviar.disabled = true;
@@ -224,20 +356,13 @@ html(lang="es")
         e.preventDefault();
         ocultarAlertas();
 
+        if (!validarFormularioPaso1()) {
+          mostrarError('Por favor corrige los errores señalados en el formulario.');
+          return;
+        }
+
         const nombre = document.getElementById('nombre').value.trim();
         const correo = document.getElementById('correo').value.trim().toLowerCase();
-        const clave = document.getElementById('clave').value;
-        const confirmarClave = document.getElementById('confirmarClave').value;
-
-        if (!correo.endsWith('@gmail.com') && !correo.endsWith('@googlemail.com')) {
-          mostrarError('Debes registrarte con un correo de Gmail (@gmail.com).');
-          return;
-        }
-
-        if (clave !== confirmarClave) {
-          mostrarError('Las contraseñas no coinciden.');
-          return;
-        }
 
         btnSolicitarCodigo.disabled = true;
         btnSolicitarCodigo.textContent = 'Enviando código...';
@@ -314,8 +439,8 @@ html(lang="es")
         const clave = document.getElementById('clave').value;
         const codigo = document.getElementById('codigo').value.trim();
 
-        if (codigo.length !== 6) {
-          mostrarError('El código debe tener exactamente 6 dígitos.');
+        if (codigo.length !== 6 || !/^\d{6}$/.test(codigo)) {
+          mostrarError('El código debe tener exactamente 6 dígitos numéricos.');
           return;
         }
 

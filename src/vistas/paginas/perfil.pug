@@ -37,7 +37,7 @@ block contenido
 
         h3(class="text-lg font-semibold text-[#1A1614] mb-6") Configuración de la cuenta
 
-        form(id="form-perfil" class="space-y-5")
+        form(id="form-perfil" class="space-y-5" novalidate)
 
           div
             label(class="block text-[#1A1614] mb-2 text-sm font-medium") Nuevo nombre
@@ -49,6 +49,7 @@ block contenido
               value=usuario ? usuario.nombre : ''
               class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all"
             )
+            span(id="error-nombre" class="hidden text-[#DC2626] text-xs mt-1 block")
 
           div
             label(class="block text-[#1A1614] mb-2 text-sm font-medium") Nueva contraseña (opcional)
@@ -59,6 +60,8 @@ block contenido
               placeholder="Déjalo en blanco para no cambiarla"
               class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all"
             )
+            span(id="error-clave" class="hidden text-[#DC2626] text-xs mt-1 block")
+            p(class="text-[#ADA69E] text-xs mt-1") Mínimo 8 caracteres si deseas cambiarla.
 
           button(
             type="submit"
@@ -74,10 +77,89 @@ block scripts
     const alertaExito = document.getElementById('alerta-exito');
     const btnGuardar = document.getElementById('btn-guardar');
 
+    // ── Utilidades de validación inline ──
+    function mostrarErrorCampo(inputId, errorId, mensaje) {
+      const input = document.getElementById(inputId);
+      const errorSpan = document.getElementById(errorId);
+      if (input) {
+        input.classList.add('border-[#DC2626]');
+        input.classList.remove('border-[#E2DDD5]');
+      }
+      if (errorSpan) {
+        errorSpan.textContent = mensaje;
+        errorSpan.classList.remove('hidden');
+      }
+    }
+
+    function limpiarErrorCampo(inputId, errorId) {
+      const input = document.getElementById(inputId);
+      const errorSpan = document.getElementById(errorId);
+      if (input) {
+        input.classList.remove('border-[#DC2626]');
+        input.classList.add('border-[#E2DDD5]');
+      }
+      if (errorSpan) {
+        errorSpan.textContent = '';
+        errorSpan.classList.add('hidden');
+      }
+    }
+
+    // ── Validaciones de campos ──
+    function validarNombrePerfil() {
+      const valor = document.getElementById('nuevoNombre').value.trim();
+      if (!valor) {
+        mostrarErrorCampo('nuevoNombre', 'error-nombre', 'El nombre es obligatorio.');
+        return false;
+      }
+      if (valor.length < 3) {
+        mostrarErrorCampo('nuevoNombre', 'error-nombre', 'El nombre debe tener al menos 3 caracteres. Actualmente tiene ' + valor.length + '.');
+        return false;
+      }
+      if (valor.length > 120) {
+        mostrarErrorCampo('nuevoNombre', 'error-nombre', 'El nombre no puede superar los 120 caracteres.');
+        return false;
+      }
+      limpiarErrorCampo('nuevoNombre', 'error-nombre');
+      return true;
+    }
+
+    function validarClavePerfil() {
+      const valor = document.getElementById('nuevaClave').value;
+      // La contraseña es opcional en el perfil: solo validar si el usuario escribió algo
+      if (!valor || valor.trim() === '') {
+        limpiarErrorCampo('nuevaClave', 'error-clave');
+        return true;
+      }
+      if (valor.length < 8) {
+        mostrarErrorCampo('nuevaClave', 'error-clave', 'La contraseña debe tener al menos 8 caracteres. Actualmente tiene ' + valor.length + '.');
+        return false;
+      }
+      limpiarErrorCampo('nuevaClave', 'error-clave');
+      return true;
+    }
+
+    function validarFormPerfil() {
+      const resultados = [
+        validarNombrePerfil(),
+        validarClavePerfil()
+      ];
+      return resultados.every(r => r === true);
+    }
+
+    // Blur validation — real-time feedback
+    document.getElementById('nuevoNombre').addEventListener('blur', validarNombrePerfil);
+    document.getElementById('nuevaClave').addEventListener('blur', validarClavePerfil);
+
     formulario.addEventListener('submit', async (evento) => {
       evento.preventDefault();
       alertaError.classList.add('hidden');
       alertaExito.classList.add('hidden');
+
+      if (!validarFormPerfil()) {
+        mensajeError.textContent = 'Por favor corrige los errores señalados en el formulario.';
+        alertaError.classList.remove('hidden');
+        return;
+      }
 
       const nombre = document.getElementById('nuevoNombre').value.trim();
       const clave = document.getElementById('nuevaClave').value.trim();
@@ -107,6 +189,7 @@ block scripts
         if (datos.exito) {
           alertaExito.classList.remove('hidden');
           document.getElementById('nuevaClave').value = '';
+          limpiarErrorCampo('nuevaClave', 'error-clave');
         } else {
           mensajeError.textContent = datos.mensaje || 'No se pudo actualizar el perfil.';
           alertaError.classList.remove('hidden');

@@ -23,18 +23,20 @@ block contenido
     //- Formulario
     div(class="bg-white border border-[#E2DDD5] rounded-[16px] p-6 lg:p-8 shadow-card anim-fade-up anim-fade-up-1")
 
-      form(id="form-crear-subasta" enctype="multipart/form-data" class="space-y-6")
+      form(id="form-crear-subasta" enctype="multipart/form-data" class="space-y-6" novalidate)
 
         //- Título
         div
           label(for="titulo" class="block text-[#1A1614] mb-2 text-sm font-medium") Título del artículo
           input(type="text" id="titulo" name="titulo" required minlength="5" maxlength="150" placeholder="Ej: MacBook Pro 14 pulgadas 2024" class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+          span(id="error-titulo" class="hidden text-[#DC2626] text-xs mt-1 block")
           p(class="text-[#ADA69E] text-xs mt-1") Entre 5 y 150 caracteres.
 
         //- Descripción
         div
           label(for="descripcion" class="block text-[#1A1614] mb-2 text-sm font-medium") Descripción
           textarea(id="descripcion" name="descripcion" required rows="4" placeholder="Describe tu artículo: condición, especificaciones, historia, etc." class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all resize-none")
+          span(id="error-descripcion" class="hidden text-[#DC2626] text-xs mt-1 block")
 
         //- Precio y Tiempo en grid
         div(class="grid grid-cols-1 md:grid-cols-2 gap-6")
@@ -45,6 +47,7 @@ block contenido
             div(class="relative")
               span(class="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A7F76] font-semibold") $
               input(type="number" id="precio_inicial" name="precio_inicial" required min="0.01" step="0.01" placeholder="100.00" class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 pl-8 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+            span(id="error-precio" class="hidden text-[#DC2626] text-xs mt-1 block")
 
           //- Tiempo de inactividad
           div
@@ -93,6 +96,7 @@ block contenido
                 option(value=cat.id)= cat.nombre
             else
               option(value="" disabled) No hay categorías disponibles
+          span(id="error-categoria" class="hidden text-[#DC2626] text-xs mt-1 block")
 
         //- Fotos de la subasta (Portada + Galería hasta 5 fotos total)
         div(class="space-y-4")
@@ -144,6 +148,111 @@ block scripts
     const mensajeError = document.getElementById('mensaje-error');
     const alertaExito = document.getElementById('alerta-exito');
     const btnPublicar = document.getElementById('btn-publicar');
+
+    // ── Utilidades de validación inline ──
+    function mostrarErrorCampo(inputId, errorId, mensaje) {
+      const input = document.getElementById(inputId);
+      const errorSpan = document.getElementById(errorId);
+      if (input) {
+        input.classList.add('border-[#DC2626]');
+        input.classList.remove('border-[#E2DDD5]');
+      }
+      if (errorSpan) {
+        errorSpan.textContent = mensaje;
+        errorSpan.classList.remove('hidden');
+      }
+    }
+
+    function limpiarErrorCampo(inputId, errorId) {
+      const input = document.getElementById(inputId);
+      const errorSpan = document.getElementById(errorId);
+      if (input) {
+        input.classList.remove('border-[#DC2626]');
+        input.classList.add('border-[#E2DDD5]');
+      }
+      if (errorSpan) {
+        errorSpan.textContent = '';
+        errorSpan.classList.add('hidden');
+      }
+    }
+
+    // ── Validaciones de campos ──
+    function validarTitulo() {
+      const valor = document.getElementById('titulo').value.trim();
+      if (!valor) {
+        mostrarErrorCampo('titulo', 'error-titulo', 'El título del artículo es obligatorio.');
+        return false;
+      }
+      if (valor.length < 5) {
+        mostrarErrorCampo('titulo', 'error-titulo', 'El título debe tener al menos 5 caracteres.');
+        return false;
+      }
+      if (valor.length > 150) {
+        mostrarErrorCampo('titulo', 'error-titulo', 'El título no puede superar los 150 caracteres.');
+        return false;
+      }
+      limpiarErrorCampo('titulo', 'error-titulo');
+      return true;
+    }
+
+    function validarDescripcion() {
+      const valor = document.getElementById('descripcion').value.trim();
+      if (!valor) {
+        mostrarErrorCampo('descripcion', 'error-descripcion', 'La descripción del artículo es obligatoria.');
+        return false;
+      }
+      if (valor.length < 10) {
+        mostrarErrorCampo('descripcion', 'error-descripcion', 'La descripción debe tener al menos 10 caracteres.');
+        return false;
+      }
+      limpiarErrorCampo('descripcion', 'error-descripcion');
+      return true;
+    }
+
+    function validarPrecio() {
+      const valor = document.getElementById('precio_inicial').value;
+      if (!valor || valor === '') {
+        mostrarErrorCampo('precio_inicial', 'error-precio', 'El precio inicial es obligatorio.');
+        return false;
+      }
+      const num = Number(valor);
+      if (isNaN(num) || num < 0.01) {
+        mostrarErrorCampo('precio_inicial', 'error-precio', 'El precio debe ser al menos $0.01 MXN.');
+        return false;
+      }
+      if (num > 99999999) {
+        mostrarErrorCampo('precio_inicial', 'error-precio', 'El precio es demasiado alto.');
+        return false;
+      }
+      limpiarErrorCampo('precio_inicial', 'error-precio');
+      return true;
+    }
+
+    function validarCategoria() {
+      const valor = document.getElementById('categoria_id').value;
+      if (!valor) {
+        mostrarErrorCampo('categoria_id', 'error-categoria', 'Debes seleccionar una categoría.');
+        return false;
+      }
+      limpiarErrorCampo('categoria_id', 'error-categoria');
+      return true;
+    }
+
+    function validarFormCrearSubasta() {
+      const resultados = [
+        validarTitulo(),
+        validarDescripcion(),
+        validarPrecio(),
+        validarCategoria()
+      ];
+      return resultados.every(r => r === true);
+    }
+
+    // Blur validation — real-time feedback
+    document.getElementById('titulo').addEventListener('blur', validarTitulo);
+    document.getElementById('descripcion').addEventListener('blur', validarDescripcion);
+    document.getElementById('precio_inicial').addEventListener('blur', validarPrecio);
+    document.getElementById('categoria_id').addEventListener('change', validarCategoria);
 
     // Gestor interactivo de fotos (máximo 5)
     let listaArchivosFotos = [];
@@ -234,13 +343,8 @@ block scripts
       alertaError.classList.add('hidden');
       alertaExito.classList.add('hidden');
 
-      const titulo = document.getElementById('titulo').value.trim();
-      const descripcion = document.getElementById('descripcion').value.trim();
-      const precio_inicial = document.getElementById('precio_inicial').value;
-      const categoria_id = document.getElementById('categoria_id').value;
-
-      if (!titulo || !descripcion || !precio_inicial || !categoria_id) {
-        mensajeError.textContent = 'Todos los campos obligatorios deben estar completos.';
+      if (!validarFormCrearSubasta()) {
+        mensajeError.textContent = 'Por favor corrige los errores señalados en el formulario.';
         alertaError.classList.remove('hidden');
         return;
       }

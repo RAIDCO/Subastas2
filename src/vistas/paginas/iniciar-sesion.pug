@@ -57,15 +57,17 @@ html(lang="es")
           path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7")
         span(id="mensaje-exito") ¡Sesión iniciada! Redirigiendo...
 
-      form(id="form-login" class="space-y-5")
+      form(id="form-login" class="space-y-5" novalidate)
 
         div
           label(class="block text-[#1A1614] mb-2 text-sm font-medium") Correo electrónico
           input(type="email" id="correo" name="correo" placeholder="tu@correo.com" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+          span(id="error-correo" class="hidden text-[#DC2626] text-xs mt-1 block")
 
         div
           label(class="block text-[#1A1614] mb-2 text-sm font-medium") Contraseña
           input(type="password" id="clave" name="clave" placeholder="••••••••" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+          span(id="error-clave" class="hidden text-[#DC2626] text-xs mt-1 block")
 
         div(class="flex justify-between items-center text-sm")
           label(class="flex items-center gap-2 text-[#8A7F76] cursor-pointer")
@@ -105,27 +107,31 @@ html(lang="es")
           span(id="modal-mensaje-info")
 
         //- Paso 1 Recuperar: Enviar Código
-        form(id="form-recuperar-paso-1" class="space-y-4")
+        form(id="form-recuperar-paso-1" class="space-y-4" novalidate)
           div
             label(class="block text-[#1A1614] mb-1.5 text-xs font-medium") Correo electrónico registrado
             input(type="email" id="recuperar-correo" placeholder="tu@correo.com" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-sm text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#FDE68A] transition-all")
+            span(id="error-recuperar-correo" class="hidden text-[#DC2626] text-xs mt-1 block")
 
           button(type="submit" id="btn-solicitar-recuperacion" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-2.5 rounded-[10px] text-sm transition-colors shadow-btn")
             | Enviar Código de Recuperación
 
         //- Paso 2 Recuperar: Código + Nueva Contraseña (Oculto inicialmente)
-        form(id="form-recuperar-paso-2" class="hidden space-y-4")
+        form(id="form-recuperar-paso-2" class="hidden space-y-4" novalidate)
           div
             label(class="block text-[#1A1614] mb-1 text-xs font-medium text-center") Código de verificación (6 dígitos)
             input(type="text" id="recuperar-codigo" placeholder="123456" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-3 text-center font-mono text-xl tracking-[0.3em] text-[#D97706] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] transition-all")
+            span(id="error-recuperar-codigo" class="hidden text-[#DC2626] text-xs mt-1 block")
 
           div
             label(class="block text-[#1A1614] mb-1 text-xs font-medium") Nueva contraseña
             input(type="password" id="recuperar-nueva-clave" placeholder="••••••••" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-2.5 text-sm text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] transition-all")
+            span(id="error-recuperar-nueva-clave" class="hidden text-[#DC2626] text-xs mt-1 block")
 
           div
             label(class="block text-[#1A1614] mb-1 text-xs font-medium") Confirmar nueva contraseña
             input(type="password" id="recuperar-confirmar-clave" placeholder="••••••••" required class="w-full bg-[#EFECE6] border border-[#E2DDD5] rounded-[10px] p-2.5 text-sm text-[#1A1614] placeholder-[#ADA69E] focus:outline-none focus:border-[#D97706] transition-all")
+            span(id="error-recuperar-confirmar-clave" class="hidden text-[#DC2626] text-xs mt-1 block")
 
           button(type="submit" id="btn-restablecer-clave" class="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-semibold py-2.5 rounded-[10px] text-sm transition-colors shadow-btn")
             | Restablecer Contraseña
@@ -164,6 +170,150 @@ html(lang="es")
 
       let contadorSegundosRecuperacion = 60;
       let intervaloRecuperacion = null;
+
+      // ── Utilidades de validación inline ──
+      function mostrarErrorCampo(inputId, errorId, mensaje) {
+        const input = document.getElementById(inputId);
+        const errorSpan = document.getElementById(errorId);
+        if (input) {
+          input.classList.add('border-[#DC2626]');
+          input.classList.remove('border-[#E2DDD5]');
+        }
+        if (errorSpan) {
+          errorSpan.textContent = mensaje;
+          errorSpan.classList.remove('hidden');
+        }
+      }
+
+      function limpiarErrorCampo(inputId, errorId) {
+        const input = document.getElementById(inputId);
+        const errorSpan = document.getElementById(errorId);
+        if (input) {
+          input.classList.remove('border-[#DC2626]');
+          input.classList.add('border-[#E2DDD5]');
+        }
+        if (errorSpan) {
+          errorSpan.textContent = '';
+          errorSpan.classList.add('hidden');
+        }
+      }
+
+      function esCorreoValido(correo) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+      }
+
+      // ── Validaciones del formulario de login ──
+      function validarLoginCorreo() {
+        const valor = document.getElementById('correo').value.trim();
+        if (!valor) {
+          mostrarErrorCampo('correo', 'error-correo', 'El correo electrónico es obligatorio.');
+          return false;
+        }
+        if (!esCorreoValido(valor)) {
+          mostrarErrorCampo('correo', 'error-correo', 'Ingresa un correo electrónico válido (ej: usuario@correo.com).');
+          return false;
+        }
+        limpiarErrorCampo('correo', 'error-correo');
+        return true;
+      }
+
+      function validarLoginClave() {
+        const valor = document.getElementById('clave').value;
+        if (!valor) {
+          mostrarErrorCampo('clave', 'error-clave', 'La contraseña es obligatoria.');
+          return false;
+        }
+        limpiarErrorCampo('clave', 'error-clave');
+        return true;
+      }
+
+      function validarFormLogin() {
+        const resultados = [
+          validarLoginCorreo(),
+          validarLoginClave()
+        ];
+        return resultados.every(r => r === true);
+      }
+
+      // Blur validation para login
+      document.getElementById('correo').addEventListener('blur', validarLoginCorreo);
+      document.getElementById('clave').addEventListener('blur', validarLoginClave);
+
+      // ── Validaciones del modal de recuperación ──
+      function validarRecuperarCorreo() {
+        const valor = document.getElementById('recuperar-correo').value.trim();
+        if (!valor) {
+          mostrarErrorCampo('recuperar-correo', 'error-recuperar-correo', 'El correo electrónico es obligatorio.');
+          return false;
+        }
+        if (!esCorreoValido(valor)) {
+          mostrarErrorCampo('recuperar-correo', 'error-recuperar-correo', 'Ingresa un correo electrónico válido (ej: usuario@correo.com).');
+          return false;
+        }
+        limpiarErrorCampo('recuperar-correo', 'error-recuperar-correo');
+        return true;
+      }
+
+      function validarRecuperarCodigo() {
+        const valor = document.getElementById('recuperar-codigo').value.trim();
+        if (!valor) {
+          mostrarErrorCampo('recuperar-codigo', 'error-recuperar-codigo', 'El código de verificación es obligatorio.');
+          return false;
+        }
+        if (valor.length !== 6 || !/^\d{6}$/.test(valor)) {
+          mostrarErrorCampo('recuperar-codigo', 'error-recuperar-codigo', 'El código debe tener exactamente 6 dígitos numéricos.');
+          return false;
+        }
+        limpiarErrorCampo('recuperar-codigo', 'error-recuperar-codigo');
+        return true;
+      }
+
+      function validarRecuperarNuevaClave() {
+        const valor = document.getElementById('recuperar-nueva-clave').value;
+        if (!valor) {
+          mostrarErrorCampo('recuperar-nueva-clave', 'error-recuperar-nueva-clave', 'La nueva contraseña es obligatoria.');
+          return false;
+        }
+        if (valor.length < 8) {
+          mostrarErrorCampo('recuperar-nueva-clave', 'error-recuperar-nueva-clave', 'La contraseña debe tener al menos 8 caracteres. Actualmente tiene ' + valor.length + '.');
+          return false;
+        }
+        limpiarErrorCampo('recuperar-nueva-clave', 'error-recuperar-nueva-clave');
+        // Re-validar confirmación si ya tiene valor
+        const confirmar = document.getElementById('recuperar-confirmar-clave').value;
+        if (confirmar) validarRecuperarConfirmarClave();
+        return true;
+      }
+
+      function validarRecuperarConfirmarClave() {
+        const nuevaClave = document.getElementById('recuperar-nueva-clave').value;
+        const confirmar = document.getElementById('recuperar-confirmar-clave').value;
+        if (!confirmar) {
+          mostrarErrorCampo('recuperar-confirmar-clave', 'error-recuperar-confirmar-clave', 'Debes confirmar tu nueva contraseña.');
+          return false;
+        }
+        if (nuevaClave !== confirmar) {
+          mostrarErrorCampo('recuperar-confirmar-clave', 'error-recuperar-confirmar-clave', 'Las contraseñas no coinciden.');
+          return false;
+        }
+        limpiarErrorCampo('recuperar-confirmar-clave', 'error-recuperar-confirmar-clave');
+        return true;
+      }
+
+      function validarFormRecuperarPaso2() {
+        const resultados = [
+          validarRecuperarCodigo(),
+          validarRecuperarNuevaClave(),
+          validarRecuperarConfirmarClave()
+        ];
+        return resultados.every(r => r === true);
+      }
+
+      // Blur validation para modal de recuperación
+      document.getElementById('recuperar-correo').addEventListener('blur', validarRecuperarCorreo);
+      document.getElementById('recuperar-codigo').addEventListener('blur', validarRecuperarCodigo);
+      document.getElementById('recuperar-nueva-clave').addEventListener('blur', validarRecuperarNuevaClave);
+      document.getElementById('recuperar-confirmar-clave').addEventListener('blur', validarRecuperarConfirmarClave);
 
       function ocultarModalAlertas() {
         modalAlertaError.classList.add('hidden');
@@ -206,6 +356,11 @@ html(lang="es")
           document.getElementById('recuperar-correo').value = correoActual;
         }
         ocultarModalAlertas();
+        // Limpiar errores inline del modal
+        limpiarErrorCampo('recuperar-correo', 'error-recuperar-correo');
+        limpiarErrorCampo('recuperar-codigo', 'error-recuperar-codigo');
+        limpiarErrorCampo('recuperar-nueva-clave', 'error-recuperar-nueva-clave');
+        limpiarErrorCampo('recuperar-confirmar-clave', 'error-recuperar-confirmar-clave');
         formRecuperarPaso2.classList.add('hidden');
         formRecuperarPaso1.classList.remove('hidden');
         subtituloRecuperar.textContent = 'Ingresa tu correo registrado para recibir un código de verificación.';
@@ -224,6 +379,10 @@ html(lang="es")
       formRecuperarPaso1.addEventListener('submit', async (e) => {
         e.preventDefault();
         ocultarModalAlertas();
+
+        if (!validarRecuperarCorreo()) {
+          return;
+        }
 
         const correo = document.getElementById('recuperar-correo').value.trim().toLowerCase();
 
@@ -260,6 +419,9 @@ html(lang="es")
       // Volver a Paso 1 Modal
       btnRecuperarVolver.addEventListener('click', () => {
         ocultarModalAlertas();
+        limpiarErrorCampo('recuperar-codigo', 'error-recuperar-codigo');
+        limpiarErrorCampo('recuperar-nueva-clave', 'error-recuperar-nueva-clave');
+        limpiarErrorCampo('recuperar-confirmar-clave', 'error-recuperar-confirmar-clave');
         formRecuperarPaso2.classList.add('hidden');
         formRecuperarPaso1.classList.remove('hidden');
         subtituloRecuperar.textContent = 'Ingresa tu correo registrado para recibir un código de verificación.';
@@ -297,20 +459,14 @@ html(lang="es")
         e.preventDefault();
         ocultarModalAlertas();
 
+        if (!validarFormRecuperarPaso2()) {
+          mostrarModalError('Por favor corrige los errores señalados en el formulario.');
+          return;
+        }
+
         const correo = document.getElementById('recuperar-correo').value.trim().toLowerCase();
         const codigo = document.getElementById('recuperar-codigo').value.trim();
         const nuevaClave = document.getElementById('recuperar-nueva-clave').value;
-        const confirmarClave = document.getElementById('recuperar-confirmar-clave').value;
-
-        if (codigo.length !== 6) {
-          mostrarModalError('El código debe tener exactamente 6 dígitos.');
-          return;
-        }
-
-        if (nuevaClave !== confirmarClave) {
-          mostrarModalError('Las contraseñas no coinciden.');
-          return;
-        }
 
         btnRestablecerClave.disabled = true;
         btnRestablecerClave.textContent = 'Restableciendo...';
@@ -357,6 +513,12 @@ html(lang="es")
         e.preventDefault();
         alertaError.classList.add('hidden');
         alertaExito.classList.add('hidden');
+
+        if (!validarFormLogin()) {
+          mensajeError.textContent = 'Por favor corrige los errores señalados en el formulario.';
+          alertaError.classList.remove('hidden');
+          return;
+        }
 
         const correo = document.getElementById('correo').value;
         const clave = document.getElementById('clave').value;
