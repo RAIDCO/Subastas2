@@ -3,39 +3,39 @@ const dns = require("dns");
 
 // Forzar a Node.js a resolver primero IPv4 para conectarse a Gmail SMTP (evita ENETUNREACH IPv6 en Render)
 try {
-    dns.setDefaultResultOrder("ipv4first");
+  dns.setDefaultResultOrder("ipv4first");
 } catch {
-    // Ignorar en entornos sin soporte
+  // Ignorar en entornos sin soporte
 }
 
 // Configuración del transportador Nodemailer
 const crearTransportador = () => {
-    const usuario = process.env.CORREO_USUARIO;
-    let clave = process.env.CORREO_CLAVE;
+  const usuario = process.env.CORREO_USUARIO;
+  let clave = process.env.CORREO_CLAVE;
 
-    if (!usuario || !clave) {
-        return null;
-    }
+  if (!usuario || !clave) {
+    return null;
+  }
 
-    // Eliminar cualquier espacio de la Contraseña de Aplicación de Gmail
-    const claveLimpia = String(clave).replace(/\s+/g, "");
-
-    return nodemailer.createTransport({
-        host: process.env.CORREO_HOST || "smtp.gmail.com",
-        port: parseInt(process.env.CORREO_PUERTO || "587", 10),
-        secure: false, // 587 usa STARTTLS (compatible con Render)
-        family: 4,     // Forzar IPv4 para evitar ENETUNREACH IPv6
-        auth: {
-            user: usuario,
-            pass: claveLimpia
-        },
-        tls: {
-            rejectUnauthorized: false
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000
-    });
+  return nodemailer.createTransport({
+    service: "gmail",
+    host: "smtp.gmail.com",
+    port: parseInt(process.env.CORREO_PUERTO || "587", 10),
+    secure: false, // 587 usa STARTTLS (compatible con Render)
+    lookup: (hostname, options, callback) => {
+      dns.lookup(hostname, { family: 4 }, callback);
+    },
+    auth: {
+      user: usuario,
+      pass: claveLimpia
+    },
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000
+  });
 };
 
 /**
@@ -44,21 +44,21 @@ const crearTransportador = () => {
  * @param {string} codigo - Código de 6 dígitos.
  */
 const enviarCodigoVerificacion = async (correoDestino, codigo) => {
-    const transportador = crearTransportador();
+  const transportador = crearTransportador();
 
-    // Fallback de desarrollo si aún no se han configurado credenciales en el .env
-    if (!transportador) {
-        console.log("\n==========================================");
-        console.log("⚠️ [MODO DESARROLLO - CORREO NO CONFIGURADO]");
-        console.log(`✉️ Código de verificación para ${correoDestino}: [ ${codigo} ]`);
-        console.log("Configura CORREO_USUARIO y CORREO_CLAVE en tu .env para envío real.");
-        console.log("==========================================\n");
-        return true;
-    }
+  // Fallback de desarrollo si aún no se han configurado credenciales en el .env
+  if (!transportador) {
+    console.log("\n==========================================");
+    console.log("⚠️ [MODO DESARROLLO - CORREO NO CONFIGURADO]");
+    console.log(`✉️ Código de verificación para ${correoDestino}: [ ${codigo} ]`);
+    console.log("Configura CORREO_USUARIO y CORREO_CLAVE en tu .env para envío real.");
+    console.log("==========================================\n");
+    return true;
+  }
 
-    const remitente = process.env.CORREO_REMITENTE || `"SubastasPro" <${process.env.CORREO_USUARIO}>`;
+  const remitente = process.env.CORREO_REMITENTE || `"SubastasPro" <${process.env.CORREO_USUARIO}>`;
 
-    const plantillaHtml = `
+  const plantillaHtml = `
     <!DOCTYPE html>
     <html lang="es">
     <head>
@@ -122,20 +122,20 @@ const enviarCodigoVerificacion = async (correoDestino, codigo) => {
     </html>
     `;
 
-    try {
-        const info = await transportador.sendMail({
-            from: remitente,
-            to: correoDestino,
-            subject: `${codigo} es tu código de verificación de SubastasPro`,
-            html: plantillaHtml
-        });
+  try {
+    const info = await transportador.sendMail({
+      from: remitente,
+      to: correoDestino,
+      subject: `${codigo} es tu código de verificación de SubastasPro`,
+      html: plantillaHtml
+    });
 
-        console.log(`✉️ Correo de verificación enviado con éxito a ${correoDestino} (ID: ${info.messageId})`);
-        return true;
-    } catch (error) {
-        console.error(`❌ [Nodemailer Error] No se pudo enviar correo a ${correoDestino}:`, error.message);
-        throw new Error(`Error al enviar el correo con el código: ${error.message}`);
-    }
+    console.log(`✉️ Correo de verificación enviado con éxito a ${correoDestino} (ID: ${info.messageId})`);
+    return true;
+  } catch (error) {
+    console.error(`❌ [Nodemailer Error] No se pudo enviar correo a ${correoDestino}:`, error.message);
+    throw new Error(`Error al enviar el correo con el código: ${error.message}`);
+  }
 };
 
 /**
@@ -144,20 +144,20 @@ const enviarCodigoVerificacion = async (correoDestino, codigo) => {
  * @param {string} codigo - Código de 6 dígitos.
  */
 const enviarCodigoRecuperacion = async (correoDestino, codigo) => {
-    const transportador = crearTransportador();
+  const transportador = crearTransportador();
 
-    if (!transportador) {
-        console.log("\n==========================================");
-        console.log("⚠️ [MODO DESARROLLO - CORREO NO CONFIGURADO]");
-        console.log(`🔑 Código de RECUPERACIÓN DE CONTRASEÑA para ${correoDestino}: [ ${codigo} ]`);
-        console.log("Configura CORREO_USUARIO y CORREO_CLAVE en tu .env para envío real.");
-        console.log("==========================================\n");
-        return true;
-    }
+  if (!transportador) {
+    console.log("\n==========================================");
+    console.log("⚠️ [MODO DESARROLLO - CORREO NO CONFIGURADO]");
+    console.log(`🔑 Código de RECUPERACIÓN DE CONTRASEÑA para ${correoDestino}: [ ${codigo} ]`);
+    console.log("Configura CORREO_USUARIO y CORREO_CLAVE en tu .env para envío real.");
+    console.log("==========================================\n");
+    return true;
+  }
 
-    const remitente = process.env.CORREO_REMITENTE || `"SubastasPro" <${process.env.CORREO_USUARIO}>`;
+  const remitente = process.env.CORREO_REMITENTE || `"SubastasPro" <${process.env.CORREO_USUARIO}>`;
 
-    const plantillaHtml = `
+  const plantillaHtml = `
     <!DOCTYPE html>
     <html lang="es">
     <head>
@@ -221,23 +221,23 @@ const enviarCodigoRecuperacion = async (correoDestino, codigo) => {
     </html>
     `;
 
-    try {
-        const info = await transportador.sendMail({
-            from: remitente,
-            to: correoDestino,
-            subject: `${codigo} es tu código para restablecer tu contraseña en SubastasPro`,
-            html: plantillaHtml
-        });
+  try {
+    const info = await transportador.sendMail({
+      from: remitente,
+      to: correoDestino,
+      subject: `${codigo} es tu código para restablecer tu contraseña en SubastasPro`,
+      html: plantillaHtml
+    });
 
-        console.log(`✉️ Correo de recuperación enviado con éxito a ${correoDestino} (ID: ${info.messageId})`);
-        return true;
-    } catch (error) {
-        console.error(`❌ [Nodemailer Error] No se pudo enviar correo de recuperación a ${correoDestino}:`, error.message);
-        throw new Error(`Error al enviar el correo de recuperación: ${error.message}`);
-    }
+    console.log(`✉️ Correo de recuperación enviado con éxito a ${correoDestino} (ID: ${info.messageId})`);
+    return true;
+  } catch (error) {
+    console.error(`❌ [Nodemailer Error] No se pudo enviar correo de recuperación a ${correoDestino}:`, error.message);
+    throw new Error(`Error al enviar el correo de recuperación: ${error.message}`);
+  }
 };
 
 module.exports = {
-    enviarCodigoVerificacion,
-    enviarCodigoRecuperacion
+  enviarCodigoVerificacion,
+  enviarCodigoRecuperacion
 };
