@@ -1,4 +1,12 @@
 const nodemailer = require("nodemailer");
+const dns = require("dns");
+
+// Forzar a Node.js a resolver primero IPv4 para conectarse a Gmail SMTP (evita ENETUNREACH IPv6 en Render)
+try {
+    dns.setDefaultResultOrder("ipv4first");
+} catch {
+    // Ignorar en entornos sin soporte
+}
 
 // Configuración del transportador Nodemailer
 const crearTransportador = () => {
@@ -12,21 +20,21 @@ const crearTransportador = () => {
     // Eliminar cualquier espacio de la Contraseña de Aplicación de Gmail
     const claveLimpia = String(clave).replace(/\s+/g, "");
 
-    // Si se especifica un servicio (como gmail) o host personalizado
-    const servicio = process.env.CORREO_SERVICIO || "gmail";
-
     return nodemailer.createTransport({
-        service: servicio,
         host: process.env.CORREO_HOST || "smtp.gmail.com",
         port: parseInt(process.env.CORREO_PUERTO || "587", 10),
-        secure: false, // 587 usa STARTTLS, compatible con firewalls en la nube
+        secure: false, // 587 usa STARTTLS (compatible con Render)
+        family: 4,     // Forzar IPv4 para evitar ENETUNREACH IPv6
         auth: {
             user: usuario,
             pass: claveLimpia
         },
         tls: {
             rejectUnauthorized: false
-        }
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000
     });
 };
 
