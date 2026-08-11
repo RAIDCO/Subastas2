@@ -3,20 +3,29 @@ const nodemailer = require("nodemailer");
 // Configuración del transportador Nodemailer
 const crearTransportador = () => {
     const usuario = process.env.CORREO_USUARIO;
-    const clave = process.env.CORREO_CLAVE;
+    let clave = process.env.CORREO_CLAVE;
 
     if (!usuario || !clave) {
         return null;
     }
 
+    // Eliminar cualquier espacio de la Contraseña de Aplicación de Gmail
+    const claveLimpia = String(clave).replace(/\s+/g, "");
+
+    // Si se especifica un servicio (como gmail) o host personalizado
+    const servicio = process.env.CORREO_SERVICIO || "gmail";
+
     return nodemailer.createTransport({
-        service: process.env.CORREO_SERVICIO || "gmail",
+        service: servicio,
         host: process.env.CORREO_HOST || "smtp.gmail.com",
-        port: parseInt(process.env.CORREO_PUERTO || "465", 10),
-        secure: true,
+        port: parseInt(process.env.CORREO_PUERTO || "587", 10),
+        secure: false, // 587 usa STARTTLS, compatible con firewalls en la nube
         auth: {
             user: usuario,
-            pass: clave
+            pass: claveLimpia
+        },
+        tls: {
+            rejectUnauthorized: false
         }
     });
 };
@@ -105,15 +114,20 @@ const enviarCodigoVerificacion = async (correoDestino, codigo) => {
     </html>
     `;
 
-    const info = await transportador.sendMail({
-        from: remitente,
-        to: correoDestino,
-        subject: `${codigo} es tu código de verificación de SubastasPro`,
-        html: plantillaHtml
-    });
+    try {
+        const info = await transportador.sendMail({
+            from: remitente,
+            to: correoDestino,
+            subject: `${codigo} es tu código de verificación de SubastasPro`,
+            html: plantillaHtml
+        });
 
-    console.log(`✉️ Correo de verificación enviado con éxito a ${correoDestino} (ID: ${info.messageId})`);
-    return true;
+        console.log(`✉️ Correo de verificación enviado con éxito a ${correoDestino} (ID: ${info.messageId})`);
+        return true;
+    } catch (error) {
+        console.error(`❌ [Nodemailer Error] No se pudo enviar correo a ${correoDestino}:`, error.message);
+        throw new Error(`Error al enviar el correo con el código: ${error.message}`);
+    }
 };
 
 /**
@@ -199,15 +213,20 @@ const enviarCodigoRecuperacion = async (correoDestino, codigo) => {
     </html>
     `;
 
-    const info = await transportador.sendMail({
-        from: remitente,
-        to: correoDestino,
-        subject: `${codigo} es tu código para restablecer tu contraseña en SubastasPro`,
-        html: plantillaHtml
-    });
+    try {
+        const info = await transportador.sendMail({
+            from: remitente,
+            to: correoDestino,
+            subject: `${codigo} es tu código para restablecer tu contraseña en SubastasPro`,
+            html: plantillaHtml
+        });
 
-    console.log(`✉️ Correo de recuperación enviado con éxito a ${correoDestino} (ID: ${info.messageId})`);
-    return true;
+        console.log(`✉️ Correo de recuperación enviado con éxito a ${correoDestino} (ID: ${info.messageId})`);
+        return true;
+    } catch (error) {
+        console.error(`❌ [Nodemailer Error] No se pudo enviar correo de recuperación a ${correoDestino}:`, error.message);
+        throw new Error(`Error al enviar el correo de recuperación: ${error.message}`);
+    }
 };
 
 module.exports = {
