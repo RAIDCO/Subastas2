@@ -175,10 +175,14 @@
             if (datos.segundosParaInicio > 0) {
                 iniciarTimerProgramada(datos.segundosParaInicio);
             }
-        } else if (datos.segundosRestantes > 0) {
+        } else if (datos.estado === "activa") {
             if (timerProgramadaInterval) clearInterval(timerProgramadaInterval);
             if (cronometroEl) {
-                cronometroEl.textContent = formatearTiempo(datos.segundosRestantes);
+                if (datos.segundosRestantes !== null && datos.segundosRestantes !== undefined && datos.segundosRestantes > 0) {
+                    cronometroEl.textContent = formatearTiempo(datos.segundosRestantes);
+                } else {
+                    cronometroEl.textContent = "--:--";
+                }
                 cronometroEl.classList.remove("text-[#DC2626]");
                 cronometroEl.classList.add("text-[#D97706]");
             }

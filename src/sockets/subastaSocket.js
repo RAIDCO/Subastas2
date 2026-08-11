@@ -4,7 +4,8 @@ const { obtenerEstadoEfectivo } = require("../utilidades/fechas");
 const {
     iniciarTemporizador,
     reiniciarTemporizador,
-    obtenerTiempoRestante
+    obtenerTiempoRestante,
+    asegurarEstadoTemporizador
 } = require("../servicios/temporizadorSubastaServicio");
 const { procesarAutoPujas } = require("../servicios/autoPujaServicio");
 
@@ -68,19 +69,25 @@ const configurarSockets = (io) => {
                         ganador: null
                     });
                 } else if (subasta.estado === "activa") {
-                    const tiempoRestante = obtenerTiempoRestante(subastaId);
+                    const estadoTemp = await asegurarEstadoTemporizador(subasta, io);
 
-                    if (tiempoRestante <= 0) {
-                        iniciarTemporizador(subastaId, subasta.tiempo_inactividad_minutos, io);
+                    if (estadoTemp.finalizada) {
+                        socket.emit("subasta:estado-actual", {
+                            subastaId,
+                            estado: "finalizada",
+                            precioActual: Number(subasta.precio_actual),
+                            segundosRestantes: 0,
+                            ganador: subasta.ganador ? { id: subasta.ganador.id, nombre: subasta.ganador.nombre } : null
+                        });
+                    } else {
+                        socket.emit("subasta:estado-actual", {
+                            subastaId,
+                            estado: "activa",
+                            precioActual: Number(subasta.precio_actual),
+                            segundosRestantes: estadoTemp.segundosRestantes,
+                            ganador: subasta.ganador ? { id: subasta.ganador.id, nombre: subasta.ganador.nombre } : null
+                        });
                     }
-
-                    socket.emit("subasta:estado-actual", {
-                        subastaId,
-                        estado: "activa",
-                        precioActual: Number(subasta.precio_actual),
-                        segundosRestantes: obtenerTiempoRestante(subastaId),
-                        ganador: subasta.ganador ? { id: subasta.ganador.id, nombre: subasta.ganador.nombre } : null
-                    });
                 }
 
                 // Enviar las últimas pujas al nuevo cliente
@@ -185,8 +192,8 @@ const configurarSockets = (io) => {
                 subasta.ultima_puja_at = new Date();
                 await subasta.save();
 
-                // 8. Reiniciar el temporizador de inactividad
-                reiniciarTemporizador(subastaId, io);
+                // 8. Reiniciar el temporizador de inactividad (a partir de esta puja)
+                reiniciarTemporizador(subastaId, io, subasta.tiempo_inactividad_minutos);
 
                 // 9. Obtener el nombre del usuario
                 const usuario = await Usuario.findByPk(contenidoToken.id, {
