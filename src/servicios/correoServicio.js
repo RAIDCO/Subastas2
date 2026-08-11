@@ -17,6 +17,9 @@ const crearTransportador = () => {
     return null;
   }
 
+  // Eliminar cualquier espacio de la Contraseña de Aplicación de Gmail
+  const claveLimpia = String(clave).replace(/\s+/g, "");
+
   return nodemailer.createTransport({
     service: "gmail",
     host: "smtp.gmail.com",
